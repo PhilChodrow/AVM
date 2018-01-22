@@ -10,10 +10,11 @@
 \author{\emph{Philip S. Chodrow and Peter J. Mucha}}
 \date{\today}
 
+
 \usepackage{pc_writeup}
 \usepackage{pc_math}
 \usepackage[comma,authoryear]{natbib} 
-
+\graphicspath{{../assets/}{../fig/}}
 % -----------------------------------------------------------------------
 % --------------------------------- BODY --------------------------------
 % -----------------------------------------------------------------------
@@ -143,7 +144,7 @@
 
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{../../figs/frequencies.pdf}
+		\includegraphics[width=\textwidth]{frequencies.pdf}
 		\caption{Simulated and expected frequencies for some of the terms appearing in \eqref{eq:approx_expectation}. Points are simulation traces over 1,000 runs with varying $c$ and $\alpha$, while curves are the analytic results computed in Section \ref{sec:analytic}.} \label{fig:frequencies}
 	\end{figure}
 
@@ -187,7 +188,7 @@
 
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{../../figs/transition_joy.pdf}
+		\includegraphics[width=\textwidth]{transition_joy.pdf}
 		\caption{Phase transitions for varying $c$ in the case $\lambda = 0$. The height of the black curves are proportional to the equilibrium value of $x$ at the corresponding values of $c$ and $\alpha$, with $u = 0.5$, computed from simulations on $10^5$ nodes over $2\times 10^6$ burn-in steps and averaged over $3 \times 10^6$ steps. The red curve gives the analytic approximation computed according to \eqref{eq:phase_transition}. Note that $\alpha$ decreases along the horizontal axis.} \label{fig:detailed_transition}
 	\end{figure}
 
@@ -204,7 +205,7 @@
 
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{../../figs/phase_transition_detailed.pdf}
+		\includegraphics[width=\textwidth]{phase_transition_detailed.pdf}
 		\caption{Phase transitions for variable $\lambda$ in the case $c = 4$ and $u = 0.5$, computed from simulations on $10^5$ nodes over $2\times 10^6$ burn-in steps and averaged over $3 \times 10^6$ steps. Vertical lines give the corresponding  approximations to the phase transition computed according to \eqref{eq:phase_transition}.} \label{fig:transition_mutation}
 	\end{figure}
 
@@ -214,7 +215,7 @@
 
 	\begin{figure}
 		\centering 
-		\includegraphics[width=\textwidth]{../../figs/V_term_empirical.pdf}
+		\includegraphics[width=\textwidth]{V_term_empirical.pdf}
 		\caption{Observed voter terms from simulations as a function of the discordant edge density $x$ and normalized by the mean degree $c$. A smoother (black) is shown as a visual guide. The red line gives the linear approximation \eqref{eq:linear_approx}. Panels give varying values of $c$.} \label{fig:linear_approx}
 	\end{figure}
 
@@ -239,7 +240,7 @@
 	
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{../../figs/full_approx_lambda_0.pdf}
+		\includegraphics[width=\textwidth]{full_approx_lambda_0.pdf}
 		\caption{Evaluation of the approximation scheme. Points give simulation traces for varying $c$ and $\alpha$, while lines give approximate equilibrium discordant edge densities computed according to \eqref{eq:lambda_0}.} \label{fig:full_approx}
 	\end{figure}
 
@@ -263,17 +264,40 @@
 
 	Obtaining data for these extensions (variable mutation rates, nontrivial opinion topology) may require assistance from Bill Shi, the author of the simulation code. We may therefore want to consider asking him for further collaboration and add him as an author. 
 
+\section{Appendix}
 
+	\subsection{Modularity Approximations}
+		We present a brief derivation of a simple approximation for the modularity in terms of the proportion $x$ of discordant edges in the binary-opinion case. Starting from Equation (4) of \url{wikipedia}, we have 
+		\begin{align}
+			Q = \sum_{i = 0}^1 (e_{ii} - a_i^2)\;, \label{eq:simple_modularity}
+		\end{align}
+		where $e_ij$ is the fraction of edges with one end in community $i$ and another in community $j$, and $a_i$ is the fraction of ends of edges lying in community $i$. From these definitions, we immediately have 
+		\begin{align*}
+			e_{00} = e_{11} = \frac{1-x}{2} \quad\quad e_{01} = e_{10} = \frac{1-x}{2} \quad\quad a_0  = a_1    = \frac{1}{2}\;.
+		\end{align*}
+		Equation \eqref{eq:simple_modularity} then reads 
+		\begin{align*}
+			Q = \frac{1}{2} - x\;,
+		\end{align*}
+		so that $Q$ decreases linearly with $x$ and is zero precisely when $x = \frac{1}{2}$. This approximation gives a simple prediction for the modularity, which can then be compared to data for both the ``true'' opinion partition and the optimal modularity found algorithmically. 
 
+		We note that this calculation generalizes gracefully. Define $x_{ij}$ to be the equilibrium expectation for the number of edges between nodes of opinion $i$ and opinion $j$. Then, we have $e_{ij} = x_{ij}$ and $a_{i} = \sum_{j} e_{ij}$, allowing us to proceed in the calculation. 
+		\todo{Do we need to take into account the fact that we are averaging $a_{i}^2$?} 
 
+	\subsection{Modularity Conjectures}
+		In principle, we would expect that, for sufficiently large networks, modularity maximization would detect something close to the true opinion groups. Here we state a few, progressively stronger versions of this claim. Let $Q$ be the expected modularity of the opinion partition, with the expectation taken over the equilibrium distribution. Let $\hat{Q}$ be the maximum-modularity partition into $2$ groups, with the expectation again taken over the equilibrium distribution. Let $P$ and $\hat{P}$ be (random) partitions corresponding to the true opinion partition and the modularity-maximizing partitions, respectively. 
 
+		\begin{conj}
+			\textbf{Weak}: $\hat{Q} \rightarrow Q$ as $N \rightarrow \infty$ for at least some regions in parameter space.  
+		\end{conj}
 
+		\begin{conj}
+			\textbf{Medium}: $J(P, \hat{P}) \in o(N)$, where $J$ is the Jaccard metric. That is, the number of nodes ``misclassified'' via modularity maximization grows slower than the size of the network, and can therefore be neglected in the large network limit. 
+		\end{conj}
 
-
-		
-
-
-
+		\begin{conj}
+			\textbf{Strong}: $\hat{P}$ converges to $P$ in probability under the Jaccard metric: $\prob(J(P, \hat{P}) = 0) \rightarrow 1$.
+		\end{conj}
 
 
 \bibliography{/Users/phil/bibs/library.bib}{}
