@@ -11,3 +11,9 @@ C/bin
 *.out
 *.snm
 *.toc
+*.bbl
+*.blg
+
+assets
+data
+fig
