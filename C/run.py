@@ -25,7 +25,7 @@ mode = [0, 1]
 pars = product(realizations, lam, c, mode, alph, U_naught)
 for realization, lamb, cee, mode, alpha, U0 in pars:
 
-    outfile = 'data/mode_' + str(mode) + '_run_' + str(count)
+    outfile = 'data/C/mode_' + str(mode) + '_run_' + str(count)
     edge = node*cee/2.0
 
     cmd='C/bin/DynamicVoter -n {} -m {} -a {} -l {} -t {} -M {} -T {} -o {} -u {}  '.format(node, edge, alpha, lamb, dt, mode, max_steps, outfile, U0);
