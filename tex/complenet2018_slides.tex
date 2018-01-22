@@ -1,6 +1,8 @@
 %!TEX program = xelatex
 \documentclass{beamer}
 \usepackage{pc_slides}
+\usepackage{caption}
+
 
 \graphicspath{{../assets/}{../fig/}}
 
@@ -56,8 +58,92 @@
 		  	Network $G$, nodes with opinions $\{\ell_i\}$. Each time-step:
 		  	\begin{itemize}
 		  		\item \textbf{Mutation}: With probability $\lambda$, flip a node's opinion.
-		  		\item \textbf{Rewiring}: With probability $(1-\lambda)\alpha$, rewire a \textbf{discordant} edge between two nodes that disagree. 
+		  		\item \textbf{Rewiring}: With probability $(1-\lambda)\alpha$, move a \textbf{discordant} edge between two nodes that disagree and attach it to a new node selected uniformly at random. 
 		  		\item \textbf{Vote}: With probability $(1-\alpha)(1-\lambda)$, a node attached to a discordant discordant edge changes its opinion. 
+		  	\end{itemize}
+		  	\cite{Durrett2012}, more citations here
+		  	\textbf{Note:} When $\lambda > 0$, system is ergodic. 
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Simple Analytic Question}
+			Let $\eta$ be the equilibrium measure, and define 
+			\begin{align*}
+				x = \mathbb{E}_\eta[X] = \mathbb{E}_\eta\left[\frac{1}{m}\sum_{(i,j) \in \mathcal{E}} \delta (\ell_i, \ell_j)\right],
+			\end{align*}
+			the \textbf{expected proportion of discordant edges}. 
+
+			How can we approximate $x$ in terms of $\lambda$, $\alpha$, and $c$?
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Existing Analytic Methods}
+
+			\begin{itemize}
+				\item \textbf{Pair Approximation:} Scalable, inaccurate. \cite{Demirel2012,Durrett2012}
+				\item \textbf{Approximate Master Equations:} Somewhat accurate, not scalable with mean degree, not scalable with number of opinion types. \cite{Durrett2012}
+				\item \textbf{Active Motif Approximation:} Somewhat accurate, scalable with degree, not scalable with number of opinion types. \cite{Demirel2012}
+			\end{itemize}
+
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{An Equilibrium Approximation}
+			For any measure $\nu$, we have 
+			\begin{align*}
+				\mathbb{E}_\nu[X_{t+1} - X_{t}] &= \lambda c(1-2\mathbb{E}_\nu[X_t])  \tag{mutate} \\ 
+											&\quad - (1-\lambda)\frac{\alpha}{2} \tag{rewire} \\ 
+											&\quad + (1-\lambda)(1-\alpha)\mathbb{E}_\nu[V(X_t)]\;, \tag{vote}
+			\end{align*}
+			where $V$ is an unknown term reflecting the expected impact of a vote on $X_t$. 
+
+			\textbf{Strategy:} Approximate $V$ at equilibrium, take $\nu = \eta$, and solve for $\mathbb{E}_\eta[X_t]$.
+
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Approximation Scheme}
+		  	Scheme: consider a simple scenario, ignore interactions, and then average the voter term within this scenario, resulting in an analytically tractable approximation. 
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Phase Transition}
+		  	\begin{figure}
+		  		\centering
+		  		\includegraphics[width=\textwidth]{transition_joy.pdf}
+		  		\caption{Caption!} \label{fig:}
+		  	\end{figure}
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Equilibrium Behavior}
+		  	\begin{figure}
+		  		\centering
+		  		\includegraphics[width=\textwidth]{full_approx_lambda_0.pdf}
+		  		\caption{} \label{fig:}
+		  	\end{figure}
+		\end{frame}	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Scalability}
+		  	\begin{itemize}
+		  		\item Pair Approximation: $O(k^2)$.
+		  		\item Approximate Master Equations: $O(c^2 k^2)$.
+		  		\item Active Motif Approximations: $O(c^3 k)$.
+		  		\item Present Method: $O(k^2)$. 
 		  	\end{itemize}
 		\end{frame}
 	
@@ -74,7 +160,7 @@
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		
 		\begin{frame}\frametitle{}
-		  
+		  	
 		\end{frame}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -106,7 +192,7 @@
 	
 		\begin{frame}[allowframebreaks]\frametitle{References}
 			\bibliographystyle{apalike}
-		    \bibliography{lib.bib}
+		    \bibliography{/Users/phil/bibs/library.bib}{}
 		\end{frame}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
