@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # coefficients ------------------------------------------------------------
-
+# test modification.
 beta_coef <- function(a, u, mode = 'random'){
     ifelse(mode == 'random',
            (1.0+a*u)/(2.0-a*(1.0-u)),
