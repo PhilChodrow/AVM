@@ -2,27 +2,113 @@
 \documentclass{beamer}
 \usepackage{pc_slides}
 
-\title{CompleNet Slides}
+\graphicspath{{../assets/}{../fig/}}
+
+\title{Dynamics of Community Formation in an Adaptive Voter Model}
 \date{\today}
-\author{Phil Chodrow}
-\institute{MIT Human Mobility and Networks Laboratory \alert|\alert| Operations Research Center}
+\author{Philip S. Chodrow and Peter J. Mucha}
+\institute{
+	\vspace{6.4mm}
+	$\vcenter{\hbox{\includegraphics[height=1cm]{mit_logo}}}$
+	\hspace*{.2in}
+	% $\vcenter{\hbox{\includegraphics[height=1.5cm]{orc_logo}}}$
+	% $\vcenter{\hbox{\includegraphics[height=1.5cm]{lids_logo}}}$
+	% $\vcenter{\hbox{\includegraphics[height=1.5cm]{cee_logo}}}$
+	$\vcenter{\hbox{\includegraphics[height=1.5cm]{nsf_logo}}}$
+}
+
+\metroset{block=fill}
+\setbeamertemplate{frame footer}{$\quad$ Community Dynamics \alert| Chodrow \& Mucha}
 
 % -------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------
 % -------------------------------------------------------------------------------------------------
 
 \begin{document}
-
-% \def\short{1}
-
-\newif\iflong
-\ifdefined\short
-	\longfalse
-\else
-	\longtrue
-\fi
-
-
-
 \maketitle
+
+\section{Introduction}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Community Structure}
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{A Familiar Community Model}
+		  
+			But: how do networks \emph{get this way?} 
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}[standout]
+			So, can we formulate \alert{tractable}, \alert{dynamical} models of community structure in networks?
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{Noisy Adaptive Voter Models}
+		  	Network $G$, nodes with opinions $\{\ell_i\}$. Each time-step:
+		  	\begin{itemize}
+		  		\item \textbf{Mutation}: With probability $\lambda$, flip a node's opinion.
+		  		\item \textbf{Rewiring}: With probability $(1-\lambda)\alpha$, rewire a \textbf{discordant} edge between two nodes that disagree. 
+		  		\item \textbf{Vote}: With probability $(1-\alpha)(1-\lambda)$, a node attached to a discordant discordant edge changes its opinion. 
+		  	\end{itemize}
+		\end{frame}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{New Analytic Results}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{}
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Community Measures}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{}
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conjectures}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{}
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wrapping Up}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		\begin{frame}\frametitle{}
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		\begin{frame}[standout]
+		References
+		  
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		\begin{frame}[allowframebreaks]\frametitle{References}
+			\bibliographystyle{apalike}
+		    \bibliography{lib.bib}
+		\end{frame}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \end{document}
