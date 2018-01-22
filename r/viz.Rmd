@@ -9,9 +9,15 @@ output: html_document
 library(tidyverse)
 library(data.table)
 library(ggjoy)
-source('models.R')
+source('r/models.R')
 
-data_dir <- 'Evolving-Voter/Code/data/'
+fig_dir <- 'fig'
+if(!dir.exists(fig_dir)){
+    dir.create(fig_dir)
+}
+
+
+data_dir <- 'data/C/'
 files <- list.files(data_dir, full.names = T) 
 files <- files[grepl('.process', files)]
 ```
@@ -35,7 +41,7 @@ df <- c(0,1) %>%
 
 ```{r}
 df <- df %>% 
-    filter(step > 2000000,
+    filter(step > 2000,
            N01_prev > 0) %>% 
     mutate(c = (N00 + 2*N01 + N11)/ (N0 + N1),
            x = 2*N01 / (N00 + 2*N01 + N11),
@@ -96,7 +102,7 @@ plot_df %>%
     xlab(expression(alpha)) + 
     ylab(expression(x)) 
 
-ggsave('../fig/approx_informal.pdf', width = 8, height = 7)
+ggsave('fig/approx_informal.pdf', width = 8, height = 7)
 
 ```
 
@@ -211,7 +217,7 @@ plot_df %>%
     xlab(expression(alpha)) + 
     scale_y_continuous(limits = c(0, .5))
 
-ggsave('../fig/full_approx_lambda_0.pdf', width = 6, height = 2.5)
+ggsave('fig/full_approx_lambda_0.pdf', width = 6, height = 2.5)
 
 ```
 
@@ -249,7 +255,7 @@ sub_df %>%
     guides(fill = guide_legend(title = expression(log[2]~lambda)),
            color = F)
 
-ggsave('../fig/phase_transition_detailed.pdf', width = 7, height = 3)
+ggsave('fig/phase_transition_detailed.pdf', width = 7, height = 3)
 
 ```
 
@@ -286,7 +292,7 @@ plot_df %>%
     xlab(expression(alpha)) + 
     ylab(expression(c))
 
-ggsave('../fig/transition_joy.pdf', width = 6, height = 3)
+ggsave('fig/transition_joy.pdf', width = 6, height = 3)
 ```
 
 # Arch visualization
@@ -316,7 +322,7 @@ df %>%
 
 df %>% 
     filter(action == 0,
-           step > 2000000,
+           step > 2000,
            abs(u - .5) < .02,
            lambda == min(lambda)) %>% 
     mutate(x = round(x, 2)) %>% 
@@ -338,7 +344,7 @@ df %>%
     geom_point(aes(y = dN/c), pch = 21) + 
     ylab(expression(V/c))
 
-ggsave('../fig/V_term_empirical.pdf', width = 8, height = 3.5)
+ggsave('fig/V_term_empirical.pdf', width = 8, height = 3.5)
 
 
 ```
