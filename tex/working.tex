@@ -1,0 +1,282 @@
+%!TEX program = xelatex
+
+% -----------------------------------------------------------------------
+% --------------------------------- PREAMBLE ----------------------------
+% -----------------------------------------------------------------------
+
+\documentclass[english]{scrartcl}
+
+\title{Analytic Calculations for Phase Transitions in a Noisy Adaptive Voter Model}
+\author{\emph{Philip S. Chodrow and Peter J. Mucha}}
+\date{\today}
+
+\usepackage{pc_writeup}
+\usepackage{pc_math}
+\usepackage[comma,authoryear]{natbib} 
+
+% -----------------------------------------------------------------------
+% --------------------------------- BODY --------------------------------
+% -----------------------------------------------------------------------
+
+\begin{document}
+\setkomafont{disposition}{\mdseries\rmfamily}
+
+\maketitle
+	\begin{abstract}
+		In this set of notes, we formulate a scalable analytic method for approximating phase transitions in sparse, binary $0-1$ adaptive voter models. Our method applies to the case in which the proportion $u$ of nodes holding opinion $1$ remains approximately equal over time, which we enforce in simulations via infrequent mutation events similar to those introduced in \cite{Ji2013}. The method proceeds by approximating the average impact of voting terms in equilibrium by considering a simplified scenario for which expectations may be computed analytically. 
+
+		Relative to the approximate master equation approach employed by \cite{Durrett2012}, our method more accurately computes the $u = \frac{1}{2}$ phase transitions for both rewire-to-random and rewire-to-same variants of the model, and does not require the solution of nonlinear systems whose dimension scales quadratically in the mean degree $c$. As a result, the methods presented here may be used to compute phase transitions for networks with much higher mean degree than enabled by AMEs. Relative to the linearization procedure of \cite{Bohme2011}, the methods we develop provide stronger approximations in the rewire-to-random case and somewhat worse approximations in the rewire-to-same case. Our approximation is simpler and more scalable than theirs, requiring the solution of a single, closed-form nonlinear equation rather than an eigenvalue decomposition. The strong scalability of these methods may make possible previously intractable approximations for systems with multiple opinions and variable rewiring and mutation rates. 
+	\end{abstract}
+
+
+\section{Model Description and Notation}
+	
+	We consider the following two models, which may be viewed as noisy versions of the rewire-to-same and rewire-to-random models studied by \cite{Durrett2012}. 
+
+	The model is as follows. We consider an initial graph $G = (\mathcal{N}, \mathcal{E})$ endowed with time-dependent opinions $v_i(t) \in \{0,1\}$. We fix parameters $\alpha,\lambda \in [0,1]$, and allow both the edges $\mathcal{E}(t)$ of $G$ and the opinions $\{v_i(t)\}$ of the nodes of $G$ as follows:  
+	\begin{enumerate}
+		\item \textbf{Mutate}: With probability $\lambda$, uniformly sample a node $i$ from $\mathcal{N}$ and change its opinion: $v_i(t+1) = 1-v_i(t) $. 
+		\item \textbf{Sample}: Otherwise (with probability $1-\lambda$), sample edge $e = (i,j)$ uniformly at random conditional on $v_i \neq v_j$. Choose a random orientation for $e$.  Then, 
+		\begin{enumerate}
+			\item \textbf{Rewire}: With probability $\alpha$, delete edge $e = (i,j)$ and add edge $e' = (i,k)$. In the rewire-to-random variant, $k$ is chosen uniformly from $\mathcal{N}\setminus \{i\}$. In the rewire-to-same variant, $k$ is chosen uniformly from the set $S_i = \{\ell \in \mathcal{N}\setminus \{i\} | v_\ell(t) = v_i(t)\}$. In both cases, multi-edges are permitted. 
+			\item \textbf{Vote}: Otherwise (with probability $1-\alpha$),  $v_i(t+1) = v_j(t)$. 
+		\end{enumerate}
+	\end{enumerate}
+	It would be of interest to define multiple mutation parameters that control the relative rates of mutations $0\rightarrow 1$ and $1 \rightarrow 0$; however, we will restrict our attention to the case of symmetric mutation rates. 
+
+	Our notation closely follows that of \cite{Durrett2012}. Let $N_v$ be the number of nodes holding opinion $v$, and let $u = \frac{N_1}{\abs{\mathcal{N}}}$ be the proportion of nodes holding opinion $1$. Let $N_{ij}$ be the number of \emph{oriented} edges connecting nodes of opinion $i$ to nodes of opinion $j$. Thus, $N_{01} = N_{10}$, and $N_{00}$ is twice the number of (unoriented) edges between nodes of opinion $0$. We have $N_{00} + N_{11} + N_{01} + N_{10} = 2M$, where $M = \abs{\mathcal{E}}$. We let $N_d = N_{01} + N_{10}$ be the number of discordant edges, and  define $x \triangleq \frac{N_d}{2M}$ as the proportion of all edges which are discordant. Finally, let $c = \frac{2M}{N}$ be the mean degree. 
+
+\section{Approximation Framework}
+
+	We first begin by considering the expected change in the number of discordant edges in a single time-step. Conditioning on whether the event in that step is a mutation, a rewiring event, or a vote, we obtain the expression
+	\begin{align*}
+		\E[N_d(t+1) - N_d(t)] = \frac{2\lambda}{N}(M - 2N_d(t)) - \frac{(1-\lambda)\alpha}{2}(q_0 + q_1) + (1-\lambda)(1-\alpha)V\;,
+	\end{align*}
+	where 
+	\begin{align*}
+		q_0 = 
+		\begin{cases}
+			1-u &\quad \text{rewire to random} \\ 
+			1 &\quad \text{rewire to same}
+		\end{cases} 
+		\quad 
+		q_1 = 
+		\begin{cases}
+			u &\quad \text{rewire to random} \\ 
+			1 &\quad \text{rewire to same.}
+		\end{cases}
+	\end{align*}
+	The unknown term $V$ is the expected impact of a voting voting event on the discordant edge count, and may in general depend on any of the system parameters as well as $N_d(t)$ and $u$. Introducing the scaled variable $x$ and suppressing the argument $t$ yields the slightly more compact expression 
+	\begin{align}
+		f(x; a, u, c, q_0, q_1) \triangleq \lambda c(1-2x) - \frac{(1-\lambda)\alpha}{2} (q_0 + q_1) + (1-\lambda)V \label{eq:expected_change}
+	\end{align} 
+	for the expected change in discordant edges. 
+
+	Due to local correlations introduced by voting, there is no hope of calculating $V$ exactly in full generality. Instead, we approximate $V$ by considering a simplified scenario whose expectations can be computed analytically. The quality of the approximation depends on the extent to which this simplified scenario resembles the equilibrium behavior of the full system. 
+
+	The scenario is as follows. We suppose that, at time $t$, node $v$ has just changed its opinion from $0$ to $1$ due to a voting step. We ``join the action'' at time $t+1$. At this time, node $v$ has a number $K_0$ of discordant edges and a number $J_0$ of concordant edges. We will track each of the discordant edges until each of them has been made concordant, logging any voting events along the way. The average impact of the voting events we observe on the total discordant edge count is our approximation for $V$. 
+
+	In order to make this program tractable, we impose the following assumptions: 
+	\begin{enumerate}
+		\item \textbf{Separation of Timescales}: We assume that the rest of the network is changing sufficiently slowly relative to the edges of $v$ that it may be modeled as fixed. This assumption is expected to be strongest when $x \approx 0$, and to become weaker as the number of discordant edges becomes nonnegligible. 
+		\item \textbf{Degree Distribution:} We assume that $G$ may be treated as a union of one or more Erd\"{o}s-Renyi components with mean degree $c$. This assumption appears to be nearly exact, as shown in \cite{Demirel2012}. Note that, since node $v$ was reached by following an edge, $v$ has in expectation $c+1$ edges, of which one is known to be concordant. 
+		\item \textbf{Mean Field Approximation:} We assume that nodes other than $v$ have in expectation $cx$ discordant and $c(1-x)$ concordant edges. 
+	\end{enumerate}
+
+\section{Analytic Calculations} \label{sec:analytic}
+	There are three classes of voting events that we need to track. 
+	Let $R$ be a random variable giving the number of votes by neighbors of $v$. Let $S$ be a random variable giving the number of votes by nodes not attached to $v$, but caused by one of the $K_0$ initial discordant edges attached to $v$. 
+	Finally, we must consider a vote by $v$. We define $I_v \in \{0,1\}$ to be the indicator random variable for the event that node $v$ votes (changes its opinion) prior to all edges attached to $v$ being made concordant. Since the impact of such an event depends on the number of concordant and discordant edges attached to $v$ at that time, we must track these numbers as well. We therefore define $J$ (resp. $K$) to be the number of concordant (resp. discordant) edges attached to $v$ at the time when $v$ votes. If $v$ does not vote (that is, $I_v = 0$), then we set $J = K = 0$. 
+
+	With this notation, our approximation to the voter term $\hat{V}$ may be written 
+	\begin{equation}
+		\hat{V}(x) = \frac{(\E[R] + \E[S])w(x) + \prob(I_v = 1) \E[J - K|I_v = 1]}{\E[R+S] + \prob(I_v = 1)}\;, \label{eq:approx_expectation}
+	\end{equation}
+	where $w(x)$ gives the expected change in discordant edges when a node other than $v$ votes. Each of the probabilities and expectations appearing in \eqref{eq:approx_expectation} is implicitly conditioned on initial condition of $v$ as expressed by $J_0$ and $K_0$. 
+
+	We now proceed to compute the required components of \eqref{eq:approx_expectation}. The distribution for these four variables factors as 
+	\begin{align*}
+		p_{R, S, J, K} = p_{S|K,J} \otimes p_{R|J} \otimes  p_{J|K}\otimes p_K\;.
+	\end{align*}
+	We have 
+	\begin{align*}
+		p_{K}(k) = 
+		\begin{cases}
+			(1-\beta)\beta^{K_0 - k} &\quad 1\leq k \leq K_0\\ 
+			\beta^{K_0} &\quad k = 0,
+ 		\end{cases}
+	\end{align*}
+	where $\beta$ is the probability that an event is not a vote by $v$, given that it removes a discordant edge from $v$. Carrying out the bookkeeping, we find 
+	\begin{align*}
+		\beta \triangleq 
+		\begin{cases}
+			\frac{1+\alpha u}{2-\alpha(1-u)} &\quad \text{rewire to same}\\ 
+			\frac{1+\alpha}{2} &\quad \text{rewire to random.}
+		\end{cases}
+	\end{align*}
+	The remaining variables, appropriately conditioned, all have binomial distributions: 
+	\begin{align*}
+		J-J_0|K &\sim \text{binomial}(K_0 - K, \eta) \\ 
+		R|J &\sim \text{binomial}(J - J_0, \rho) \\ 
+		S|K &\sim \text{binomial}(K_0 - K - J + J_0, \sigma)\;,
+	\end{align*}
+	where 
+	\begin{align*}
+			\eta \triangleq 
+			\begin{cases}
+				\frac{1-\alpha(1-u)}{1+\alpha u}  \\ 
+				\frac{1-\alpha}{1+\alpha} 
+			\end{cases} \quad 
+			\rho \triangleq 
+			\begin{cases}
+				\frac{1-\alpha}{1+\alpha u}  \\ 
+				\frac{1-\alpha}{1+\alpha}   
+			\end{cases} \quad 
+			\sigma \triangleq 
+			\begin{cases}
+				\frac{\alpha u}{\alpha(1+u)}\frac{2(1-\alpha)}{2-\alpha} &\quad \text{rewire to random} \\ 
+				0   &\quad \text{rewire to same.}
+			\end{cases}
+		\end{align*}
+	The coefficient $\eta$ gives the probability that an event that removes a discordant edge from $v$, other than a vote by $v$, produces a concordant edge either through rewiring or through a vote by a neighbor of $v$. The coefficient $\rho$ gives the probability that such an event is in fact a vote by a neighbor of $v$. The coefficient $\sigma$ gives the probability that an edge which is rewired but not resolved is ultimately resolved via a vote. 
+
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth]{../../figs/frequencies.pdf}
+		\caption{Simulated and expected frequencies for some of the terms appearing in \eqref{eq:approx_expectation}. Points are simulation traces over 1,000 runs with varying $c$ and $\alpha$, while curves are the analytic results computed in Section \ref{sec:analytic}.} \label{fig:frequencies}
+	\end{figure}
+
+	We may now compute the various terms in \eqref{eq:approx_expectation}. First, we have 
+	\begin{align*}
+		\prob(I_v = 1) &= \prob(K \geq 1) \\ 
+					   &= 1-\beta^{K_0}.
+	\end{align*}
+	Then, the expected number of discordant edges at time of vote is
+	\begin{align*}
+		\E[K|I_v = 1] &= \E[K|K \geq 1] \\ 
+					  &= \frac{K_0}{1-\beta^{K_0}} - \frac{\beta}{1-\beta}\;
+	\end{align*}
+	Note that the corresponding unconditional expectation is $\E[K] = (1-\beta^{K_0})\E[K|I_v = 1]$.
+	The expected number of concordant edges (conditional on $v$ voting) is 
+	\begin{align*}
+		\E[J|I_v = 1] &= \E[J|K \geq 1] \\ 
+					  &= J_0 + \eta(K_0 - \E[K|K\geq 1) \\ 
+					  &= J_0 + \eta \left(\frac{\beta^{K_0} K_0}{1-\beta^{K_0}} - \frac{\beta}{1-\beta}\right)\;.
+	\end{align*}
+	The expected number of votes by neighbors of $v$ is 
+	\begin{align*}
+		\E[R] &= \rho(\E[J] - J_0) \\ 
+			  &= \rho(\eta(K_0 - \E[K]) - J_0) \\ 
+			  &= \rho\left(\eta\frac{\beta(1-\beta^{K_0})}{1-\beta} - J_0\right).
+	\end{align*}
+	Symmetry requires that $\E[R] = \E[I_v] = 1-\beta^{K_0}$, which may indeed be verified by simplifying the last line. 
+	The expected number of votes by nodes which are not $v$ or its neighbors is 
+	\begin{align*}
+		\E[S] &= \sigma(K_0 + J_0 - (\E[K] + \E[J])) \\ 
+			  &= \sigma(K_0 + J_0 - (\E[K] + \eta(K_0 - \E[K]) + J_0)) \\ 
+			  &= \sigma (1 + \eta) (K_0 - \E[K]) \\ 
+			  &= \sigma (1 + \eta) \frac{\beta(1-\beta^{K_0})}{1-\beta}\;.
+	\end{align*}
+	Finally, $w(x)$ gives the expected change in discordant edges when a node other than $v$ votes. Under the mean-field approximation, such a node has in expectation $cx$ discordant and $c(1-x)$ concordant edges, plus the discordant edge along which we reach the node. Combining these terms gives $w(x) = c(1-2x) - 1$, with the important special case $w(0) = c-1$. 
+
+	How should we fill in $K_0$ and $J_0$? In the subcritical regime, a node that has just changed its opinion has $\E[K_0] = c$ discordant edges in expectation, and $J_0 = 1$ concordant edge (along which the voting event took place). While it is possible to average $\hat{V}(x)$ over an Poisson distribution with mean $c$ to give probabilistic accounting of the discordant edges, the results that follow suggest that this is largely unnecessary. We therefore assume $K_0 = \E[K_0] = c$ and $J_0 = 1$ in the below. 
+
+
+\section{Phase Transition}
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth]{../../figs/transition_joy.pdf}
+		\caption{Phase transitions for varying $c$ in the case $\lambda = 0$. The height of the black curves are proportional to the equilibrium value of $x$ at the corresponding values of $c$ and $\alpha$, with $u = 0.5$, computed from simulations on $10^5$ nodes over $2\times 10^6$ burn-in steps and averaged over $3 \times 10^6$ steps. The red curve gives the analytic approximation computed according to \eqref{eq:phase_transition}. Note that $\alpha$ decreases along the horizontal axis.} \label{fig:detailed_transition}
+	\end{figure}
+
+	Substituting $\hat{V}$ for $V$ in equation \eqref{eq:expected_change} yields an approximate criterion for the phase transition in $\alpha$. The critical point $\alpha^*$ should solve
+	\begin{align}
+		\lambda c - \frac{(1-\lambda)\alpha}{2}(q_0 + q_1) +(1-\lambda)(1-\alpha)\hat{V}(0) = 0. \label{eq:phase_transition}
+	\end{align}
+	
+	To first connect with previous work which studied the non-mutating version of the model, Figure \ref{fig:detailed_transition} compares simulation data to $\alpha^*$ computed numerically from \eqref{eq:phase_transition}. Black curves give the equilibrium value of $x$ for $u = \frac{1}{2}$ as computed via simulation, while the red curve gives the prediction for the phase transition computed by numerically solving \eqref{eq:phase_transition} in the case $\lambda = 0$. For the rewire-to-random case, the approximation is nearly exact for $c$ ranging from $4$ to $20$. For the rewire-to-same case, the approximation is noticeably worse, transitioning from overestimating the critical value of $\alpha$ for small $c$ to underestimating it as $c$ grows larger. While less ambitious than the results of \cite{Durrett2012}, our methods compare favorably in the estimation of the phase transition both in accuracy and computational efficiency. Indeed, the estimation of the location of the phase transition does not appear computationally feasible for large $c$ using approximate master equations. 
+
+	Figure \ref{fig:transition_mutation} additionally compares the behavior of the phase transition in the presence of nonnegligible mutation rate $\lambda$, comparing simulation results to numerical solutions of \eqref{eq:phase_transition} in the case $c = 4$. The agreement is fairly strong in both cases, including both the detailed location of each transition and the disappearance of the transition for sufficiently large $\lambda$. 
+
+	It would be pleasant to derive from \eqref{eq:phase_transition} the relation $\alpha^* \approx \frac{c-1}{c}$ in the rewire-to-random case; however, I haven't found a clean path to this result yet. 
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth]{../../figs/phase_transition_detailed.pdf}
+		\caption{Phase transitions for variable $\lambda$ in the case $c = 4$ and $u = 0.5$, computed from simulations on $10^5$ nodes over $2\times 10^6$ burn-in steps and averaged over $3 \times 10^6$ steps. Vertical lines give the corresponding  approximations to the phase transition computed according to \eqref{eq:phase_transition}.} \label{fig:transition_mutation}
+	\end{figure}
+
+\section{Supercritical Equilibrium Behavior}
+	In this section we describe an informal approach to computing analytic approximations for supercritical behavior in binary adaptive voter models. The core idea is to approximate $V$ by interpolating between the phase transition at one end and known values for non-mutating voter models at the $\alpha = 0$ extreme. As we will see, $V$ behaves nearly linearly in the rewire-to-random case as a function of $x$, making this approximation quite strong. On the other hand, in the rewire-to-same case, $V$ is nonlinear and the approximation, while nevertheless favorable compared to many existing methods, is substantially poorer. 
+
+
+	\begin{figure}
+		\centering 
+		\includegraphics[width=\textwidth]{../../figs/V_term_empirical.pdf}
+		\caption{Observed voter terms from simulations as a function of the discordant edge density $x$ and normalized by the mean degree $c$. A smoother (black) is shown as a visual guide. The red line gives the linear approximation \eqref{eq:linear_approx}. Panels give varying values of $c$.} \label{fig:linear_approx}
+	\end{figure}
+
+
+	Our approach begins with a result due to \cite{Allen2012} for discrete noisy voter models on regular trees, which corresponds to the case $\alpha = 0$.\footnote{The model considered in this paper uses node-selection rather than discordant edge-selection as studied here; however, the results appear to be near-exact for the present model as well.} As the authors show using generating functions, the equilibrium density $x_0^*$ of discordant edges in the binary-opinion noisy voter model on an $r$-regular tree may be explicitly computed as 
+	\begin{align*}
+		x_0^* = \frac{1-q}{2}\;,\quad \text{with} \quad q \triangleq \frac{r - \sqrt{r^2 - 4(1-\lambda)^2(k-1)}}{2(1-\lambda)(k-1)}\;.
+	\end{align*}
+	Keeping in mind the approximate Poissonian structure of the network at equilibrium and assuming that the number of nodes is sufficiently high, we approximate large components of the graph as $k = c+1$-regular trees and use the formula above. From this, we obtain an approximate expression for $V(x_0^*)$, the value of the voter term at $x_0^*$:
+	\begin{align*}
+		V(x_0^*) = -\frac{\lambda(1-2x_0^*)(c+1)}{1-\lambda}\;.
+	\end{align*}
+	On the other hand, we also know how to compute $V(0)$ at the phase transition.\footnote{There may not always exist a phase transition if $\lambda$ is large, in which case this analysis is not valid. I am working on extensions to handle this case.} Balancing terms, we must have 
+	\begin{align*}
+		V(0) = \frac{-\lambda c + (1-\lambda)\alpha^*(q_0 + q_1)}{(1-\lambda)(1-\alpha^*)}\;.
+	\end{align*}
+	Our approximation scheme is simply to suppose that $V(x)$ is approximately linear as a function of $x$. Since we have its value at two points, we can compute it explicitly: 
+	\begin{align}
+		V_{\text{lin}}(x) = \frac{x_0^* - x}{x_0^*}V(0) + \frac{x}{x_0^*} V(x^*_0)\label{eq:linear_approx}\;.
+	\end{align}
+	Figure \ref{fig:linear_approx} compares this approximation to observations from simulations for $\lambda = 0$ and finds the approximation to be relatively accurate in the rewire-to-random case, with some systematic underestimation in the rewire-to-same case. 
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth]{../../figs/full_approx_lambda_0.pdf}
+		\caption{Evaluation of the approximation scheme. Points give simulation traces for varying $c$ and $\alpha$, while lines give approximate equilibrium discordant edge densities computed according to \eqref{eq:lambda_0}.} \label{fig:full_approx}
+	\end{figure}
+
+	Substituting $V_{\text{lin}}$ for $V$ in \eqref{eq:expected_change} yields an analytic expression for the equilibrium value of $x$ as a function of the system parameters: 
+	\begin{align*}
+		x^*(\alpha) \approx x^*_0\frac{(1-\alpha)(1-\lambda)V(0) - (q_0 + q_1)(1-\lambda)\alpha + c\lambda}{(1-\alpha)(1-\lambda)V(0)-(1-\alpha)(1-\lambda)V(x_0^*)  + 2\lambda cx_0^*}\;,
+	\end{align*}
+	with the important special case for $\lambda = 0$:
+	\begin{align}
+		x^*(\alpha) \approx x^*_0\frac{(1-\alpha)V(0) - (q_0 + q_1)\alpha}{(1-\alpha)(V(0) - V(x_0^*))}\;. \label{eq:lambda_0}
+	\end{align}
+	Figure \ref{fig:full_approx} compares the approximation \eqref{eq:lambda_0} to data. As we would expect from the results of Figure \ref{fig:linear_approx}, the approximation is significantly stronger for the rewire-to-random case than the rewire-to-same case. Indeed, in the former model the approximation appears nearly exact, substantially improving on the approximate master equation approach of \cite{Durrett2012} in the calculation of the top of the arch. The rewire-to-same case is somewhat harder to evaluate. The approximation for $c = 4$ compares favorably to both the AMEs of \cite{Durrett2012} and the active-motif approximation of \cite{Demirel2012} in both accuracy and computational efficiency, but degrades progressively for larger $c$. While data using the active motif scheme is not available for higher values of $c$, it is likely that this scheme is more accurate at least in the regime near the phase transition. 
+
+\section{Discussion}
+
+	As noted above, the approximation scheme developed here is best among the literature that I have found for the $u = 0.5$ rewire-to-random model, both in location of the phase transition and the discordant edge density past the transition. The approximation in the rewire-to-same case is noticeably inferior. The phase transition and discordant edge densities for $c = 4$ are comparable with the best published results I've been able to find (\cite{Demirel2012}). For higher $c$ the behavior becomes much worse, but the relative lack of published results for higher values of $c$ makes detailed comparison difficult. Overall, it seems fair to say that we have achieved surprising success on the rewire-to-random model but have not nailed the rewire-to-same model. 
+
+	The next logical step for this work is to consider the $u = \neq 0.5$ case. In the non-mutating adaptive voter model, states with $u \neq 0$ are driven by the voter dynamics, resulting in the ``arch'' observed by \cite{Durrett2012}. For the mutating model, on the other hand, $u \neq 0.5$ is naturally obtained by setting differential mutation rates $\lambda_{0\rightarrow 1}$ and $\lambda_{1\rightarrow 0}$, in which case the mean value of $u$ will be $\frac{\lambda_{0\rightarrow1}}{\lambda_{0\rightarrow 1} + \lambda_{1 \rightarrow 0}}$. It is possible that the constructing the approximation above for this case and taking the limit as $\lambda_{0\rightarrow 1} \rightarrow 0$, $\lambda_{1\rightarrow 0} \rightarrow 0$ with $\frac{\lambda_{0\rightarrow1}}{\lambda_{0\rightarrow 1} + \lambda_{1 \rightarrow 0}} = u$ will result in an approximation for the non-mutating case in state $u$. However, this seems too optimistic: since the same fact (that the system has proportion $u$ of opinion 1 nodes) is driven by different mechanisms in each case, it is possibly asking too much for the approximation in one to hold for the other. What seems more likely is that there will be distinct 1-dimensional manifolds in the $u-x$ phase space, one for each value of the overall mutation rate $\lambda_{0\rightarrow 1} + \lambda_{1\rightarrow 0}$, with position on the manifold determined by $u$ as above. 
+
+	Conditional on the success of this analysis, the next logical extension is to the case of multiple opinions, such as studied in \cite{Shi2013}. The primary promise of the methods developed here is that they ``should'' scale gracefully with the number of opinions, unlike AMEs and the active-motif-based approach of \cite{Demirel2012}. A successful extension in this direction would mark, to my knowledge, the first scalable analytic approximation schemes for multi-opinion adaptive voter models. Further extensions past this point may include variable rewiring rates (e.g. $\alpha_{AB} \neq \alpha_{BC} \neq \alpha_{AC}$) and non-trivial opinion topology, such as the scalar case I first worked on.  
+
+	Obtaining data for these extensions (variable mutation rates, nontrivial opinion topology) may require assistance from Bill Shi, the author of the simulation code. We may therefore want to consider asking him for further collaboration and add him as an author. 
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+\bibliography{/Users/phil/bibs/library.bib}{}
+\bibliographystyle{apalike}
+
+\end{document}
