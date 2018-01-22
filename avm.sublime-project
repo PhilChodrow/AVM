@@ -1,0 +1,26 @@
+{
+	"folders":
+	[
+		{
+			"path": "py",
+			"file_exclude_patterns": [
+				"__init__.py"]
+		},
+		{
+			"path": "C",
+			"folder_exclude_patterns": [
+				"bin"]
+		},
+		{
+			"path": "tex",
+			"file_exclude_patterns": [
+				"*.nav",
+				"*.toc",
+				"*.snm"
+			]
+		},
+		{
+			"path": "r"
+		}
+	]
+}

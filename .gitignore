@@ -1,0 +1,6 @@
+*.synctex.gz
+*.aux
+*.pdf
+C/bin
+*.sublime-workspace
+*.pyc
