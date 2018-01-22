@@ -4,15 +4,15 @@ from itertools import product
 import os
 
 count=len(os.listdir('data'));
-node=500; # number of nodes
-c = np.array([3, 4, 6, 8, 20]); # mean degree 
+node=10000; # number of nodes
+c = np.array([4, 6, 8, 20]); # mean degree 
 
-dt=500; # save results every dt steps
+dt=5000; # save results every dt steps
 alph = np.linspace(1.0, 0.0, 101) # rewiring probability
-lam = 2.0**(-np.arange(3, 11))
+lam = 2.0**(-np.array([2.0, 4.0, 6.0, 8.0, 10.0]))
 l_01 = np.arange(.1, .9, 9)
 g=2; # number of opinions
-max_steps = 10**5
+max_steps = 10**6
 realizations = np.arange(0,1)
 
 # U_naught = np.linspace(0, 1.0, 11)

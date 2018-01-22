@@ -8,9 +8,9 @@ from itertools import product
 N = 1000
 N_iters = 10
 pars = {
-	'alpha' : np.linspace(.6, 1, 21),
-	'beta'  : 2**(-np.linspace(3, 10, 8)),
-	'c'     : np.array([4, 6, 8])
+	'alpha' : np.linspace(0, 1, 21),
+	'beta'  : 2.0**(-np.array([2.0, 4.0, 6.0, 8.0, 10.0])),
+	'c'     : np.array([4, 6, 8, 20])
 }
 
 data_dir = 'data/py'
@@ -34,8 +34,8 @@ if __name__ == '__main__':
 		interval = 10
 
 		for i in range(len(pars)):
-			new_df = run_sim(c = pars.c[i], N = N, alpha = pars.alpha[i], beta  = pars.beta[i])
+			new_df  = run_sim(c = pars.c[i], N = N, alpha = pars.alpha[i], beta  = pars.beta[i])
 			df      = df.append(new_df, ignore_index = True)
 			if i % interval == 0:
-				# print 'printing output'
+				print 'printing output ' + str(i) + ' of ' + str(len(pars) * N_iters) 
 				df.to_csv(data_file, index = False)
