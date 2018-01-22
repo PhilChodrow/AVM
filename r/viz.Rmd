@@ -17,7 +17,6 @@ files <- files[grepl('.process', files)]
 ```
 
 ```{r}
-
 read_files <- function(mode){
     df <- files[grepl(paste0('mode_', mode), files)] %>% 
         map(fread) %>% 
