@@ -2,20 +2,16 @@
 CC = g++
 CFlags = -O3 -Wall -o
 
-# needed for bin
+# needed for ims
 voter_files = C/main.cpp C/Dynamic_Voter.cpp C/Node.cpp C/Edge.cpp C/Random1.cpp 
+py_files    = py/avm/avm.py py/run.py
 
 # directories and file paths
-DATA_DIR = data/C
+C_DATA_DIR = data/C
 BIN_DIR = C/bin
 bin_loc = C/bin/DynamicVoter
 
-# run simulation
-data: $(bin_loc) C/run.py
-	if [ ! -d "$(DATA_DIR)" ]; then \
-	  mkdir -p $(DATA_DIR);           \
-	fi
-	python C/run.py
+PY_DATA_DIR = data/py
 
 # compile bin
 $(bin_loc): $(voter_files)
@@ -24,7 +20,26 @@ $(bin_loc): $(voter_files)
 	fi
 	$(CC) $(voter_files) $(CFlags) $(bin_loc)
 
-all: $(bin_loc) data
+# run simulation (C)
+c_data: $(bin_loc) C/run.py
+	if [ ! -d "$(C_DATA_DIR)" ]; then \
+	  mkdir -p $(C_DATA_DIR);           \
+	fi
+	python C/run.py
+
+# run simulation (py)
+
+py_data: $(py_files) 
+	if [ ! -d "$(PY_DATA_DIR)" ]; then \
+	  mkdir -p $(PY_DATA_DIR);           \
+	fi
+	python py/run.py
+
+
+
+
+
+all: $(bin_loc) c_data py_data
 
 clean: 
 	rm -rf bin
