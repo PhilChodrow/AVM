@@ -1,4 +1,5 @@
 import networkx as nx
+import community
 import numpy as np
 import random 
 import pandas as pd
@@ -144,6 +145,7 @@ class coev:
 			mean_list = list()
 			mean_tension_list = list()
 			t_list = list()
+			mod_list = list()
 			
 		i = 0
 		done = False
@@ -164,6 +166,8 @@ class coev:
 				mean_list.append(self.mean_v())
 				mean_tension_list.append(self.mean_tension())
 				t_list.append(i - 1)
+				mod_list.append(self.true_modularity())
+
 				
 			if verbose: 
 				if (i - 1) % verbose_interval == 0:
@@ -174,7 +178,8 @@ class coev:
 				 'variance'     : np.array(variance_list),
 				 'mean_opinion' : np.array(mean_list),
 				 'mean_tension' : np.array(mean_tension_list),
-				 't'            : np.array(t_list)}
+				 't'            : np.array(t_list),
+				 'mod'          : np.array(mod_list)}
 
 			df = pd.DataFrame(d)
 			
@@ -183,6 +188,10 @@ class coev:
 
 		if sample:
 			return df
+
+	def true_modularity(self):
+		opinions = nx.get_node_attributes(self.G, 'x')
+		return community.modularity(opinions, self.G)
 
 
 ##### 
@@ -223,3 +232,6 @@ def run_dynamics(N, c, k, beta, alpha, normalize_k, rand_opinions,  **kwargs):
 			df[col_name] = np.repeat(param_cols[col_name], len(df))
 	
 	return df
+
+
+

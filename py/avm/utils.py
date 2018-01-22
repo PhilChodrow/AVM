@@ -1,4 +1,5 @@
 import networkx as nx
+from avm import coev
 
 def component(N, c, u):
     p = 1.0*c/N
@@ -15,7 +16,6 @@ def binary_graph(N_1, N_2, c_1, c_2, u_1, u_2):
 
 def experiment(G, alpha, beta = 0, N_burn = 10000, N_steps = 10000, sample_interval = 100, noisy = True):
     
-    print alpha, beta
     pars = {
         'alpha' : alpha,
         'beta'  : beta,
@@ -31,11 +31,30 @@ def experiment(G, alpha, beta = 0, N_burn = 10000, N_steps = 10000, sample_inter
     
     # sampled run
     d = coev(c.G.copy())
-    df, vote_df = d.dynamics(nsteps = N_steps, sample = True,  **pars)
+    df = d.dynamics(nsteps = N_steps, sample = True, notify_end = False)
     
-    for frame in [df, vote_df]:
-        frame['alpha'] = alpha
-        frame['beta'] = beta
+    df['alpha'] = alpha
+    df['beta'] = beta
 
-    return df, vote_df
+    return df
+
+def run_sim(c, N, alpha, beta,  **d_pars):
+    
+    g_pars = {
+        'N_1' : N/2,
+        'N_2' : N/2,
+        'c_1' : c,
+        'c_2' : c,
+        'u_1' : 0,
+        'u_2' : 1
+    }
+
+    G = binary_graph(**g_pars)
+    G = nx.MultiGraph(G)
+    
+    df = experiment(G, alpha, beta)
+    df['c'] = c
+    
+    return df
+
     
