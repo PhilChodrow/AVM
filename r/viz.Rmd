@@ -1,5 +1,5 @@
 ---
-title: "Visualizations"
+title: "C Visualizations"
 author: "Phil"
 date: "1/22/2018"
 output: html_document
@@ -120,7 +120,8 @@ transition_df <- expand.grid(lambda = df$lambda %>% unique(),
 
 
 plot_df <- df %>% 
-    filter(abs(u - .5) < .05) %>% 
+    filter(abs(u - .5) < .05,
+           step > 2*10^5) %>% 
     # filter(log2(lambda) < -8) %>% 
     mutate(u = round(u/5, 2)*5,
            u = pmin(u, 1-u)) %>% 
@@ -322,7 +323,7 @@ df %>%
 
 df %>% 
     filter(action == 0,
-           step > 2000,
+           step > 20000,
            abs(u - .5) < .02,
            lambda == min(lambda)) %>% 
     mutate(x = round(x, 2)) %>% 
@@ -346,6 +347,42 @@ df %>%
 
 ggsave('fig/V_term_empirical.pdf', width = 8, height = 3.5)
 
+
+```
+
+
+# Pair Approximations
+
+## Rewire-to-random PA
+
+```{r}
+
+PA <- function(l, a, c){
+    phi <- (1-a)*(1-l)
+    x <- (a*(1-l) + 2*(phi *c - 1) + sqrt(16*phi*l*c + (a*(1-l)+2*(phi*c-1))^2))/(8*phi*c)
+    return(x)
+}
+
+
+plot_df %>% 
+    filter(mode == 'random', c == 4) %>% 
+    mutate(approx = PA(lambda, alpha, c),
+           log_lambda = round(log2(lambda)),
+           log_lambda = factor(log_lambda, levels = -(1:5)*2),
+           x = ifelse(round(alpha*100) %% 5 == 0, x, NA)) %>% 
+    ggplot() + 
+    aes(x = alpha) + 
+    geom_line(aes(y = approx, group = log_lambda, color = log_lambda), size = 1) + 
+    geom_point(aes(y = x, fill = log_lambda), pch = 21) + 
+    theme_bw() + 
+    scale_color_brewer(palette = 'Dark2') + 
+    scale_fill_brewer(palette = 'Dark2') + 
+    xlab(expression(alpha)) + 
+    ylab(expression(x)) + 
+    guides(fill = guide_legend(title = expression(log~lambda)),
+           color = FALSE)
+
+ggsave('fig/PA.pdf', width = 6, height = 4)
 
 ```
 

@@ -1,0 +1,36 @@
+---
+title: "Python Visualizations"
+author: "phil"
+date: "1/23/2018"
+output: html_document
+---
+
+
+```{r}
+df <- list.files('data/py', full.names = TRUE) %>% 
+    map(read_csv) %>% 
+    reduce(rbind)
+```
+
+```{r}
+df <- df %>% 
+    rename(lambda = beta, u = mean_opinion, x = tension) 
+```
+
+# Exact relationship between x and modularity
+
+```{r}
+
+df %>% 
+    group_by(alpha, lambda, c) %>% 
+    filter(abs(u - .5) < .02) %>% 
+    summarise(x = mean(x),
+              mod = mean(mod)) %>%
+    ggplot() + 
+    aes(x = x, y = mod, color = alpha) + 
+    facet_grid(~c) + 
+    geom_point() + 
+    geom_abline(aes(slope = -1, intercept = .5))
+    
+
+```
