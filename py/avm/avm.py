@@ -84,16 +84,24 @@ class coev:
 		if(verbose):
 			print "Rewired " + str(e) + " to " + str((i,j))
 			
-	def update_step(self, beta = 0, alpha = 0, weighted = False, verbose = False):
-		
+	def update_step(self, beta = 0, gamma = 1/2, alpha = 0, weighted = False, verbose = False):
+		'''
+			gamma governs symmetry of mutations
+		'''
 		try: 
 			if np.random.rand() < beta:
-				nodes = self.G.node
-				node_labels = nodes.keys()
-				i = np.random.choice(node_labels)
-				old_opinion = nodes[i]['x']
+				u = self.mean_v()
+				direction = round(1.0*(np.random.rand() >= (gamma*u)/((1-gamma)*(1-u)+gamma*u)))
+				
+				# pick nodes until opinion matches direction 
+				old_opinion = "none yet"
+				while old_opinion != direction:
+					i = np.random.choice(self.G.node.keys())
+					old_opinion = self.G.node[i]['x']
+
+				# mutate that node
 				new_opinion = np.random.choice(list(self.opinion_space - set([old_opinion])))
-				nx.set_node_attributes(self.G, 'x', {i : new_opinion})
+				nx.set_node_attributes(self.G, 'x', {i : new_opinion})	
 				ego = nx.ego_graph(self.G, i, radius = 1).edges()
 				self.update_tension(ego)
 				# print 'mutating from ' + str(old_opinion) + ' to ' + str(new_opinion)
@@ -137,9 +145,10 @@ class coev:
 		return 1.0 * len(self.tension_dict) / self.m
 
 	
-	def dynamics(self, nsteps = None, alpha = 0, beta = 0, weighted = False, sample = False, sample_interval = 100, verbose = False, verbose_interval = 1000, notify_end = True, noisy = False):
+	def dynamics(self, nsteps = None, alpha = 0, beta = 0, gamma = 0.5, weighted = False, sample = False, sample_interval = 100, verbose = False, verbose_interval = 1000, notify_end = True, noisy = False):
 		
 		if sample:
+			step_list = list()
 			tension_list = list()
 			variance_list = list()
 			mean_list = list()
@@ -151,7 +160,7 @@ class coev:
 		done = False
 		while not done:
 			i += 1
-			self.update_step(alpha = alpha, beta = beta, weighted = True, verbose = False)
+			self.update_step(alpha = alpha, beta = beta, gamma = gamma, weighted = True, verbose = False)
 			n_tension = len(self.tension_dict)
 			
 			if nsteps is not None:
@@ -161,6 +170,7 @@ class coev:
 				done = done or n_tension == 0
 
 			if sample and ((i - 1) % sample_interval == 0 or done): 
+				step_list.append(i)
 				tension_list.append(self.percent_tension())
 				variance_list.append(self.variance())
 				mean_list.append(self.mean_v())
@@ -174,7 +184,8 @@ class coev:
 					print i, round(self.mean_tension(), 6)
 			
 		if sample: 
-			d = {'tension'      : np.array(tension_list),
+			d = {'step'         : np.array(step_list),
+				 'tension'      : np.array(tension_list),
 				 'variance'     : np.array(variance_list),
 				 'mean_opinion' : np.array(mean_list),
 				 'mean_tension' : np.array(mean_tension_list),

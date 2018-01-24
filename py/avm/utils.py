@@ -14,11 +14,12 @@ def binary_graph(N_1, N_2, c_1, c_2, u_1, u_2):
     G = nx.disjoint_union(G_1, G_2)
     return G
 
-def experiment(G, alpha, beta = 0, N_burn = 10000, N_steps = 10000, sample_interval = 100, noisy = True):
+def experiment(G, alpha, beta = 0, gamma = 0.5, N_burn = 10000, N_steps = 10000, sample_interval = 100, noisy = True):
     
     pars = {
         'alpha' : alpha,
         'beta'  : beta,
+        'gamma' : gamma,
         'verbose' : False,
         'noisy' : noisy,
         'notify_end' : False,
@@ -31,14 +32,15 @@ def experiment(G, alpha, beta = 0, N_burn = 10000, N_steps = 10000, sample_inter
     
     # sampled run
     d = coev(c.G.copy())
-    df = d.dynamics(nsteps = N_steps, sample = True, notify_end = False)
+    df = d.dynamics(nsteps = N_steps, sample = True, **pars)
     
     df['alpha'] = alpha
     df['beta'] = beta
+    df['gamma'] = gamma
 
     return df
 
-def run_sim(c, N, alpha, beta,  **d_pars):
+def run_sim(c, N, alpha, beta, gamma,  **d_pars):
     
     g_pars = {
         'N_1' : N/2,
@@ -52,7 +54,7 @@ def run_sim(c, N, alpha, beta,  **d_pars):
     G = binary_graph(**g_pars)
     G = nx.MultiGraph(G)
     
-    df = experiment(G, alpha, beta)
+    df = experiment(G, alpha, beta, gamma)
     df['c'] = c
     
     return df
