@@ -166,7 +166,7 @@ bool Dynamic_Voter::swap_delete(vector<Node>::iterator person_it, vector<vector<
 	return true;
 }
 
-double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, double max_steps, string process) {
+double Dynamic_Voter::simulate(int mode, float alpha, float lambda, float gamma, int dt, double max_steps, string process) {
 	long int e1,e0;
 	double step=0;
 	// int i,j,k;
@@ -178,7 +178,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 	
 	if (!process.empty()) {
 		pFile_process.open(process.c_str());
-		pFile_process<<"step action alpha lambda N01_prev ";
+		pFile_process<<"step action alpha lambda gamma N01_prev ";
 		for (j=0; j< (int)sites.size(); j++)
 			pFile_process<<"N"<<j<<" ";
 		for (i=0;i<(int)sites.size();i++)
@@ -191,7 +191,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 		pFile_process<<endl;
         
         e0 = edge_boundary.size();
-		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<< " "<<e0<<" ";
+		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<< " "<<gamma<<" "<<e0<<" ";
 		print_statistics_triple(pFile_process);
     }
 
@@ -226,7 +226,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 		step++;
         if ((long int)step%dt==0) {
             if (pFile_process.is_open()) {
-                pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<e0<<" ";
+                pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<gamma<<" "<<e0<<" ";
                 print_statistics_triple(pFile_process);
             }
         }
@@ -234,7 +234,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 
     if ((long int)step%dt!=0) {
         if (pFile_process.is_open()) {
-    		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<e0<<" ";
+    		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<gamma<<" "<<e0<<" ";
     		print_statistics_triple(pFile_process);
     		pFile_process.close();
         }
