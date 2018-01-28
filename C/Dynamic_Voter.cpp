@@ -174,6 +174,10 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, float gamma,
 	vector<Edge>::iterator edge_it;
 	int action=-1; //0:adapt, 1:rewire
 	ofstream pFile_process;
+	double u=.5;
+	bool dir;
+	int old_state;
+	double t=0;
 
 	
 	if (!process.empty()) {
@@ -198,12 +202,39 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, float gamma,
 	while (  (max_steps<0 || step<max_steps) ) {
 	    action=-1; // default is pass
 	    e0 = edge_boundary.size();
-        if (random_number.real()<lambda) {
-            //mutation model
-            e1 = random_number.integer(population.size());
-            action=2;
-            mutate_state(e1);
-        }
+
+	    // // TO CHANGE
+     //    if (random_number.real()<lambda) {
+     //        //mutation model
+     //        e1 = random_number.integer(population.size());
+     //        action=2;
+     //        mutate_state(e1);
+     //    }
+     //    // TO CHANGE
+
+        // DRAFT NEW
+        if (random_number.real()<lambda){
+        	action = 2;
+        	u = (double)sites[1].size() / (double)population.size();
+        	t = ((1-gamma)*u) / ((gamma)*(1.0-u)+(1-gamma)*u);
+        	if(random_number.real() >= t){
+        		dir = 0;
+        	}else{
+        		dir = 1;
+        	}
+        	cout<<u<<" ";
+        	old_state = -1;
+        	while(old_state != dir){
+        			e1 = random_number.integer(population.size());
+					old_state = population[e1].myself->state;
+				}
+        	mutate_state(e1);
+        	}
+
+        // DRAFT NEW
+
+
+
         else { //evolving voter model
         	if (edge_boundary.size() > 0){
 	    		e1 = random_number.integer(edge_boundary.size());

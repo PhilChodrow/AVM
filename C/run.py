@@ -12,8 +12,8 @@ alph = np.linspace(1.0, 0.0, 101) # rewiring probability
 lam = 2.0**(-np.array([2.0, 4.0, 6.0, 8.0, 10.0]))
 l_01 = np.arange(.1, .9, 9)
 g=2; # number of opinions
-gam = np.linspace(0, 1, 11)
-max_steps = 10**6
+gam = np.linspace(0.05, .95, 19)
+max_steps = 10**5
 realizations = np.arange(0,1)
 
 # U_naught = np.linspace(0, 1.0, 11)
