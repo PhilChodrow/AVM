@@ -44,21 +44,27 @@ coefs <- function(a, u, mode = 'random'){
 # expectation -------------------------------------------------------------
 
 # Expected impact of a voter term 
-EV <- function(a, u, k_0, j_0, x, mode){
-    w <- ifelse(mode == 'random', k_0*(1-2*x)-1, k_0-1)
-    # w <- k_0*(1-2*x)-1
+EV <- function(a, u, c, x, mode){
+	k_0 <- c*(1-x)
+	j_0 <- 1
+
+    w <- ifelse(mode == 'random', c*(1-2*x)-1, c-1)
+    
     with(coefs(a, u, mode),{
         # unconditional expectations
         EK  <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
         EJ  <- e*(k_0 - EK) + j_0
         ER  <- r*(EJ - j_0)
         ES  <- s*(k_0 - EK - EJ + j_0)
-        # list(EK, EJ, ER, ES)})
+        
         # conditional expectations, conditioned on K >= 1
         EK_ <- k_0/(1-b^k_0) - b/(1-b)
         EJ_ <- e*(k_0 - EK_) + j_0
-    
-        ((ER + ES)*w + (1-b**k_0)*(EJ_ - EK_))/(ER + ES + (1-b**k_0))
+    	n_V <- ER + ES + (1-b^k_0)
+        
+        # print(c(EK, EJ, ER, ES, EK_, EJ_, n_V, w))
+        # print(c((ER + ES)*w, (1-b**k_0)*(EJ_ - EK_), n_V))
+        1/n_V * ((ER + ES)*w + (1-b**k_0)*(EJ_ - EK_))
     }) 
 }
 
@@ -70,13 +76,12 @@ mean_EV <- function(a, u, c, x, mode, k_max = 100){
 
 dx <- function(l, u, c, mode, a){
 	rewire_term <- ifelse(mode == 'random', -1/2, -1)
-	voter_term <- .5*(EV(a, u, c, 1, 0, mode) + EV(a, 1-u, c, 1, 0, mode))
-	print(c(a, c, rewire_term, voter_term))
+	voter_term <- .5*(EV(a, u, c, 0, mode) + EV(a, 1-u, c, 0, mode))
+	# print(c(c, rewire_term, voter_term))
 	l*c + (1-l)*a*rewire_term + (1-l)*(1-a)*voter_term
 }
 
 transition <- function(l, u, c, mode){
-
     tryCatch({
         uniroot(function(a) dx(l, u, c, mode, a), c(0,1-10^(-5)))$root
         }, error = function(e) NA)
@@ -171,7 +176,7 @@ rewire_term <- function(u, mode){
 	if(mode == 'random'){
 		return(c(u[1], -1/2, -1/2, u[2]))
 	}else{
-		return(1/2*c(1 , -1, -1, 1))
+		return(c(1 , -1, -1, 1))
 	}
 }
 
@@ -185,22 +190,11 @@ rewire_term <- function(u, mode){
 #' parameters, local initial conditions, global conditions
 EV_multi <- function(a, mode, i, k_0, j_0, u, x, c){
     
-    # c_vec <- coefs(a, u, mode) 
-    # b <- c_vec[[1]]
-    # e <- c_vec[[2]]
-    # r <- c_vec[[3]]
-    # s <- c_vec[[4]]
-    
     with(coefs(a, u, mode),{
-    	# comment out
-    	# coefs(a, u, mode) %>% attach()
-    	
-    	# EK <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
-    	# EJ <- (1-b**k_0)*(e*(k_0 - EK/(1-b**k_0)) + j_0)
-    	
+
+    	# computation of initial pars
     	EK  <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
     	EJ  <- e*(k_0 - EK) + j_0
-    	
     	ER <- r*(EJ - j_0)
     	ES <- s*(k_0 - EK - EJ + j_0)
     	
@@ -208,64 +202,84 @@ EV_multi <- function(a, mode, i, k_0, j_0, u, x, c){
     	EK_ <- k_0/(1-b^k_0) - b/(1-b)
     	EJ_ <- e*(k_0 - EK_) + j_0
     	
-    	# comment out later
-    	# list(EK, EJ, ER, ES)})
+    	EV_ <- (1-b^k_0)
     	
     	# construct term
-    	n_V <- ER[i+1] + ES[i+1] + (1-b[i+1]^k_0)
+    	n_V <- ER[i+1] + ES[i+1] + EV_[i+1]
     	
-    	# problem must be in the following three lines, since n_V and EK, EJ, ER, ES all aggree. 
-    	C <- c*(c(x[1],x[4]) / u)
-    	V_01 <- 1/n_V * (ER[i+1]*(C[2-i] - 1) + ES[i+1] * (C[i+1] + C[2-i] - 2)/2 + (1-b**k_0)*(EJ_[i+1] - EK_[i+1]))
-    	V_10 <- V_01
+    	# mean-field degrees
+    	C <- c*(x / rep(u, c(2,2)))
+    	# C <- c*(x / u)
     	
-    	# these are the 00 and 11 terms, depending on i which breaks symmetry between them. 
-    	agree    <- 2/n_V * (ER[i+1] + ES[i+1] * (1 - C[i+1])/2 - EJ[i+1])
-    	disagree <- 2/n_V * (-ER[i+1]*C[2-i] + ES[i+1] * (1 - C[2-i])/2 + EK[i+1])
-    	
+    	# check these
     	if(i == 0){
-    		V_00 <- agree
-    		V_11 <- disagree
-    	}else if (i == 1){
-    		V_00 <- disagree
-    		V_11 <- agree
-    	} 
-    	return(c(V_00, V_01, V_10, V_11)) 	
+    		
+    		n_00 <-  1 + C[3]
+    		n_11 <- -C[4]
+    		w_00 <-  (1 + C[3] - C[1])/2
+    		w_11 <-  (1 + C[2] - C[4])/2
+    		s_00 <- -EV_[i+1]*EJ_[i+1]
+    		s_11 <-  EV_[i+1]*EK_[i+1]
+    		
+    	}else if(i == 1){
+    		
+    		n_00 <- -C[1]
+    		n_11 <-  1 + C[2]
+    		w_00 <-  (1 + C[3] - C[1])/2
+    		w_11 <-  (1 + C[2] - C[4])/2
+    		s_00 <-  EV_[i+1]*EK_[i+1]
+    		s_11 <- -EV_[i+1]*EJ_[i+1]
+    	}
+    	
+    	V_00 <-  2/n_V*(ER[i+1]*n_00 + ES[i+1]*w_00 + s_00)
+    	V_11 <-  2/n_V*(ER[i+1]*n_11 + ES[i+1]*w_11 + s_11)
+    	V_01 <- -(V_00 + V_11)/2
+    	V_10 <-  V_01
+    		
+    	c(V_00, V_01, V_10, V_11) 
     })
 }
 
-initial_condition_distribution <- function(x, u, c, g, l, a){
-    q <- (u*g)/sum(u*g)
-    C <- c*(c(x[1],x[4]) / u)
+# initial_condition_distribution <- function(x, u, c, g, l, a){
+#     q <- (u*g)/sum(u*g)
+#     C <- c*(c(x[1],x[4]) / u)
+# 
+#     mutations <- (2*l*q)/(2*(l+(1-l)*(1-a)))
+#     vote      <- (1-l)*(1-a)/(2*(l+(1-l)*(1-a)))
+# 
+#     data_frame(Z_0   = C %>% rep(each = 2),
+#                Y_0 = c(0,1) %>% rep(2),
+#                I   = c(1, 0) %>% rep(each = 2),
+#                p   = c(mutations[1], vote, mutations[2], vote))
+# }
+# 
+# # does the structurally correct thing, now it's time for lots of bug squashing and tightening the code. 
+# 
+# EV_m <- function(c, a, l, g, x, u, mode){
+# 	df <- initial_condition_distribution(x, u, c, g, l, a) %>% 
+# 		mutate(V = pmap(.l = list(Z_0, Y_0, I), 
+# 						.f = function(w, y, z) EV_multi(a = a, 
+# 														mode = mode, 
+# 														i = z, 
+# 														k_0 = w, 
+# 														j_0 = y, 
+# 														u = u, 
+# 														x = x, 
+# 														c = c)),
+# 			   pV = map2(V, p, `*`)) 
+# 	
+# 	df$pV %>% reduce(`+`)
+# }
 
-    mutations <- (2*l*q)/(2*(l+(1-l)*(1-a)))
-    vote      <- (1-l)*(1-a)/(2*(l+(1-l)*(1-a)))
-
-    data_frame(
-               Z_0   = C %>% rep(each = 2),
-               Y_0 = c(0,1) %>% rep(2),
-               I   = c(1, 0) %>% rep(each = 2),
-               p   = c(mutations[1], vote, mutations[2], vote)
-               )
-}
-
-# does the structurally correct thing, now it's time for lots of bug squashing and tightening the code. 
-
+# voting only at this stage
 EV_m <- function(c, a, l, g, x, u, mode){
-	df <- initial_condition_distribution(x, u, c, g, l, a) %>% 
-		mutate(V = pmap(.l = list(Z_0, Y_0, I), 
-						.f = function(w, y, z) EV_multi(a = a, 
-														mode = mode, 
-														i = z, 
-														k_0 = w, 
-														j_0 = y, 
-														u = u, 
-														x = x, 
-														c = c)),
-			   pV = map2(V, p, `*`)) 
-	
-	df$pV %>% reduce(`+`)
+
+	C <- c*(c(x[1],x[4]) / u)
+	term <- .5 * (EV_multi(a, mode, 1, C[1], 1, u, x, c) + EV_multi(a, mode, 0, C[2], 1, u, x, c))
+	return(term)
 }
+
+
 
 # ------------------------------------------------------------------------------
 # ASSEMBLY
@@ -276,9 +290,15 @@ dx_m <- function(c, a, l, g, P, u, x, mode){
 	mutation <- mutation_term(c, g, P, u, x) 
 	rewire <- rewire_term(u, mode)
 	vote <- EV_m(c, a, l, g, x, u, mode)
-	print(c(a, mutation[2], rewire[2], vote[2]))
+	# print(c(mutation, rewire, vote))
+	# print(c(a, mutation[2], rewire[2], vote[2]))
 	l*mutation + (1-l)*a*rewire + (1-l)*(1-a)*vote
 }
+
+# check: what should x sum to?
+
+
+
 
 # ------------------------------------------------------------------------------
 # ASSEMBLY
