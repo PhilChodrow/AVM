@@ -29,6 +29,69 @@
 		Relative to the approximate master equation approach employed by \cite{Durrett2012}, our method more accurately computes the $u = \frac{1}{2}$ phase transitions for both rewire-to-random and rewire-to-same variants of the model, and does not require the solution of nonlinear systems whose dimension scales quadratically in the mean degree $c$. As a result, the methods presented here may be used to compute phase transitions for networks with much higher mean degree than enabled by AMEs. Relative to the linearization procedure of \cite{Bohme2011}, the methods we develop provide stronger approximations in the rewire-to-random case and somewhat worse approximations in the rewire-to-same case. Our approximation is simpler and more scalable than theirs, requiring the solution of a single, closed-form nonlinear equation rather than an eigenvalue decomposition. The strong scalability of these methods may make possible previously intractable approximations for systems with multiple opinions and variable rewiring and mutation rates. 
 	\end{abstract}
 
+\section{Introduction}
+
+	
+
+	As a dynamical model of modular structure, we propose adaptive voter models. Adaptive voter models (AVMs) constitute a class of network stochastic processes in which both node states (``opinions'') and network topology evolve subject to coupled dynamics. 
+	The node dynamics typically model local influence via voter-like update steps, in which a node adopts the opinion of a randomly-selected, disagreeing neighbor. 
+	The edge dynamics model homophily and heterophobia: nodes are averse to disagreement, tending to cut and rewire ties to those with whom they disagree. 
+
+	Most AVMs are formulated with binary opinions on finite graphs. 
+	Under the voting and rewiring dynamics, these are Markov chains whose absorbing states consist of configurations in which there is consensus on each connected component of the social graph. 
+	As was first demonstrated empirically by \cite{Holme2006}, there exists a phase transition in the character of these absorbing states: for some regions of parameter space, the graph tends to split into two components of approximately equal size, while for others one opinion group may be significantly reduced or extinct by the time of absorption. 
+	Much subsequent work (e.g. \cite{Demirel2012,Bohme2011,Durrett2012,Kimura2008}) has focused on providing analytic approximations for the locations of phase transitions in parameter space. 
+	As demonstrated in these works, even extremely sophisticated schemes involving large matrix inversions and complex systems of differential equations suffice to produce only loose approximations. 
+
+	Modular structure consists not in complete segregation, but rather in differential edge densities within and between groups. 
+	The ``average density of discordant edges'' is therefore a key statistic of the AVM. 
+	This unfortunately raises a slightly delicate mathematical issue, since the presence of discordant edges is necessarily a transient property of classical AVMs, and the long-run discordant edge density is therefore trivially zero. 
+	Various papers have addressed this issue either by passing to the thermodynamic limit in which absorption does not occur (\cite{Silk2014,Demirel2012}) or viewing the discordant edge density as a slow transient of the process and modeling the phase space manifold along which this transient moves (\cite{Durrett2012}).
+	In this work, we follow a less-common approach first introduced by \cite{Ji2013}.
+	In addition to the voting and rewiring dynamics, we introduce mutation events in which a node changes its opinion regardless of the opinions of its neighbors. 
+	The introduction of mutation at a nonzero rate immediately renders the process ergodic, allowing the rigorous definition of equilibrium graph statistics such as the expected discordant density and expected modularity. 
+	The addition of noise, even at low level, substantially changes the nature of the phase transition under consideration. 
+	Whereas non-noisy versions of the model consider a fragmentation transition, we consider instead a transition in which the discordant edge density passes from zero to nonzero state. 
+
+	In this paper, we develop a novel method for approximating equilibrium expected edge densities for AVMs. 
+	The core of the method is a simple approximation of the discordant edge density $X_t$ as a Markov process.
+	The process $X_t$ may be viewed as a superposition of two Markov processes -- mutation and rewiring -- with one non-Markovian process, voting. 
+	By approximating the latter as itself Markovian, we can construct a closed approximation scheme. 
+	The voting approximation proceeds by considering a simplified scenario in which analytic calculations are possible, and considering the properties of the voting process within this scenario. 
+
+	As we show, the resulting approximations to the discordant edge density are clearly best-in-class for the rewire-to-random AVM, and competitive with top methods for the rewire-to-same AVM. 
+	Furthermore, our approximations have significantly superior scaling properties. 
+	Approximate master equation (\cite{Shi2013}) and active motif methods (\cite{Bohme2012}) scale poorly with the number of opinion types, making quantitative approximations prohibitive for these systems even when the number of opinions is low. 
+	In contrast, 
+
+
+	
+
+
+
+
+
+	 
+	\textbf{Approximation Schemes:}
+	\begin{enumerate}
+		\item Foundational papers: \cite{Kimura2008,Holme2006}
+		\item Active motif: \cite{Silk2014,Bohme2011,Bohme2012}
+		\item Approximate master equations: \cite{Durrett2012,Lee2017,Malik2016,Gleeson2011}
+		\item Multi-opinion systems are really hard analytically \cite{Shi2013,Bohme2012}
+		\item $\alpha = 0$ results: \cite{GRANOVSKY1995,Allen2012}
+		\item Other \cite{Rogers2013}
+	\end{enumerate}
+
+	\textbf{Strengths of our current approach:}
+		The introduction of mutation renders the AVM ergodic, enabling the computation of true equilibrium statistics for quantities of interest, enabling us to consider phase transitions from an arguably more rigorous standpoint as a phase transition in the equilibrium density of discordant edges, rather than the arguably transient fragmentation structure. 
+	\begin{enumerate}
+		\item Rewire-to-random accuracy clearly best-in-class, leading to near-exact results. 
+		\item Rewire-to-same accuracy comparable to \cite{Demirel2012}.
+		\item Approximations valid for all $u$, although we note that the dependence on $u$ is in general of quite different structure than in the non-mutating case. 
+		\item Scalability to estimate edge densities in multi-opinion and structured-opinion models (needs to be proven).
+	\end{enumerate}
+
+
 
 \section{Model Description and Notation}
 	
@@ -299,6 +362,63 @@
 			\textbf{Strong}: $\hat{P}$ converges to $P$ in probability under the Jaccard metric: $\prob(J(P, \hat{P}) = 0) \rightarrow 1$.
 		\end{conj}
 
+	\subsection{Distribution of $u$}
+		It seems that the equilibrium distribution of $u$ ought to be analytically tractable. Obtaining it would allow us to compute the average for $x$ without conditioning on $u$ along the way. 
+	\subsection{Asymmetric Mutation}
+
+		In this section, we introduce asymmetric mutation that may privilege one opinion over the other. 
+		We define a new parameter $\gamma \in (0,1)$.
+		The mutation step still occurs with probability $\lambda$, but now contains two branches. 
+		\begin{enumerate}
+			\item With probability $q(u) \triangleq \frac{\gamma(1-u)}{\gamma(1-u)+(1-\gamma)u}$, uniformly select a node with opinion $0$ and mutate its opinion to $1$. 
+			\item With probability $1-q(u)$, uniformly select a node with opinion $1$ and mutate its opinion to $0$. 
+		\end{enumerate}
+		Algebra shows that the equilibrium expectation of $u$ is simply $\gamma$. 
+		Let $W$ denote the opinion of the node selected for mutation. Conditioning on $W$, the expected change in the discordant edge count is 
+		\begin{align*}
+			\E[\Delta] = \E[\Delta|W = 0]q(u) + \E[\Delta |W = 1](1-q(u)).
+		\end{align*}
+		The expectation in the first term on the right is the difference between the average number of concordant and discordant edges attached to a $0$-opinion node, giving 
+		\begin{align*}
+			\E[\Delta|W = 0] &= \frac{1}{N_0}\left(\frac{N_{00}}{2} - N_{01}\right) \\ 
+			\E[\Delta|W = 1] &= \frac{1}{N_1}\left(\frac{N_{11}}{2} - N_{10}\right)\;.
+		\end{align*}
+		We obtain values for $N_{00}$ and $N_{11}$ in terms of $x$ by considering the evolution equations
+		\begin{align*}
+		 	\Delta N_{00} &= (1-\lambda) \alpha \frac{1-u}{2} + \frac{\lambda}{(1-u)N}\left((1-q(u))N_{01} - q(u)N_{00}\right) \\ 
+		 	&= (1-\lambda) \alpha \frac{1-u}{2} + \frac{\lambda c}{2(1-u)M}\left((1-q(u))N_{01} - q(u)N_{00}\right) \\ 
+		 	&= (1-\lambda) \alpha \frac{1-u}{2} + \frac{\lambda c}{2(1-u)}\left((1-q(u))\frac{x}{2} - q(u)x_{00}\right) \\ 
+		 	\Delta N_{11} &= (1-\lambda) \alpha \frac{u}{2}   + \frac{\lambda c}{2u}\left(q(u) \frac{x}{2} - (1-q(u)) x_{11}\right)\;,
+		\end{align*} 
+		where $x_{00} = N_{00} / M$ and $x_{11} = N_{11}/M$. We obtain 
+		\begin{align}
+			x_{00} &= \frac{(1-u)}{\lambda c q(u)}\left[\frac{\lambda c}{(1-u)}(1-q(u))x+ (1-\lambda)\alpha (1-u)\right] \\ 
+			x_{11} &= \frac{u}{\lambda c(1-q(u))}\left[\frac{\lambda c}{ u}q(u)x+(1-\lambda)\alpha u\right]
+		\end{align}
+		
+		% Since $N_0 = (1-u)N$, $N_1 = uN$ and $N_{01} = N_{10} = xM$, the only new variables to account for here are $N_{00}$ and $N_{11}$. The relationship $N_{00} + N_{11} + N_{01} + N_{10} = 2M$ allows us to solve for one in terms of the other and $x$, but we require an additional relationship in order to close the scheme. Using our standard Erd\"{o}s-Renyi assumptions, we suppose that $N_{00} = k (1-u)^2M$ and $N_{11} = k u^2M$ for a constant $k$. Conservation of edges then yields 
+		% \begin{align*}
+		% 	k(1-u)^2M + ku^2M + 2xM &= 2M \\ 
+		% 	k &= \frac{2(1-x)}{(1-u)^2 + u^2}\;.
+		% \end{align*}
+		% We then have 
+		% \begin{align}
+		% 	\E[\Delta|W = 0] &= \frac{1}{N_0}\left(\frac{N_{00}}{2} - N_{01}\right) \\ 
+		% 					 &= \frac{M}{(1-u)N}\left(\frac{(1-x)(1-u)}{(1-u)^2 + u^2} - x \right) \\ 
+		% 	\E[\Delta|W = 1] &= \frac{M}{uN}\left( \frac{(1-x)u}{(1-u)^2 + u^2} - x\right)\;.
+		% \end{align}
+
+		% Finally, 
+		% \begin{align}
+		% 	\E[\Delta] = \frac{1}{\gamma(1-u) + (1-\gamma)u}\frac{M}{N}\left(\right)
+		% \end{align}
+
+		
+
+
+
+
+		
 
 \bibliography{/Users/phil/bibs/library.bib}{}
 \bibliographystyle{apalike}
