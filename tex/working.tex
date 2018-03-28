@@ -13,7 +13,9 @@
 
 \usepackage{pc_writeup}
 \usepackage{pc_math}
-\usepackage[comma,authoryear]{natbib} 
+% \usepackage[comma,authoryear]{natbib} 
+\usepackage[backend=bibtex, url=false, doi=false, isbn=false, eprint=false]{biblatex}
+\bibliography{/Users/phil/bibs/library.bib}{}
 \graphicspath{{../assets/}{../fig/}}
 % -----------------------------------------------------------------------
 % --------------------------------- BODY --------------------------------
@@ -95,9 +97,10 @@
 
 \section{Model Description and Notation}
 	
-	We consider the following two models, which may be viewed as noisy versions of the rewire-to-same and rewire-to-random models studied by \cite{Durrett2012}. 
+	We study the following two models, which may be viewed as noisy versions of the rewire-to-same and rewire-to-random models studied by \cite{Durrett2012}. 
 
-	The model is as follows. We consider an initial graph $G = (\mathcal{N}, \mathcal{E})$ endowed with time-dependent opinions $v_i(t) \in \{0,1\}$. We fix parameters $\alpha,\lambda \in [0,1]$, and allow both the edges $\mathcal{E}(t)$ of $G$ and the opinions $\{v_i(t)\}$ of the nodes of $G$ as follows:  
+	Fix an initial graph $G = (\mathcal{N}, \mathcal{E})$ endowed with time-dependent opinions $v_i(t) \in \{0,1\}$. 
+	We fix parameters $\alpha,\lambda \in [0,1]$, and allow both the edges $\mathcal{E}(t)$ of $G$ and the opinions $\{v_i(t)\}$ of the nodes of $G$ to evolve as follows:  
 	\begin{enumerate}
 		\item \textbf{Mutate}: With probability $\lambda$, uniformly sample a node $i$ from $\mathcal{N}$ and change its opinion: $v_i(t+1) = 1-v_i(t) $. 
 		\item \textbf{Sample}: Otherwise (with probability $1-\lambda$), sample edge $e = (i,j)$ uniformly at random conditional on $v_i \neq v_j$. Choose a random orientation for $e$.  Then, 
@@ -106,46 +109,143 @@
 			\item \textbf{Vote}: Otherwise (with probability $1-\alpha$),  $v_i(t+1) = v_j(t)$. 
 		\end{enumerate}
 	\end{enumerate}
-	It would be of interest to define multiple mutation parameters that control the relative rates of mutations $0\rightarrow 1$ and $1 \rightarrow 0$; however, we will restrict our attention to the case of symmetric mutation rates. 
+	
+	Our notation closely follows that of \cite{Durrett2012}. Let $N_v$ be the number of nodes holding opinion $v$, and let $u = \frac{N_1}{\abs{\mathcal{N}}}$ be the proportion of nodes holding opinion $1$. Let $N_{ij}$ be the number of \emph{oriented} edges connecting nodes of opinion $i$ to nodes of opinion $j$. Thus, $N_{01} = N_{10}$, and $N_{00}$ is twice the number of (unoriented) edges between nodes of opinion $0$. We have $N_{00} + N_{11} + N_{01} + N_{10} = 2M$, where $M = \abs{\mathcal{E}}$. We let $N_d = N_{01} + N_{10}$ be the number of discordant edges, and  define $\rho \triangleq \frac{N_d}{2M}$ as the proportion of all edges which are discordant. Finally, let $c = \frac{2M}{N}$ be the mean degree. 
 
-	Our notation closely follows that of \cite{Durrett2012}. Let $N_v$ be the number of nodes holding opinion $v$, and let $u = \frac{N_1}{\abs{\mathcal{N}}}$ be the proportion of nodes holding opinion $1$. Let $N_{ij}$ be the number of \emph{oriented} edges connecting nodes of opinion $i$ to nodes of opinion $j$. Thus, $N_{01} = N_{10}$, and $N_{00}$ is twice the number of (unoriented) edges between nodes of opinion $0$. We have $N_{00} + N_{11} + N_{01} + N_{10} = 2M$, where $M = \abs{\mathcal{E}}$. We let $N_d = N_{01} + N_{10}$ be the number of discordant edges, and  define $x \triangleq \frac{N_d}{2M}$ as the proportion of all edges which are discordant. Finally, let $c = \frac{2M}{N}$ be the mean degree. 
+\section{Analysis}
+	As discussed in \cite{Durrett2012}, the global properties of the AVM are structured by the competing timescales of node and edge dynamics. 
+	It is easiest to see this interplay in the case $\lambda = 0$, in which case all states such that $N_d = 0$ are absorbing. 
 
-\section{Approximation Framework}
+	\subsection{Opinion Density}
+		We first consider the long-run behavior of $u(t)$. 
+		Many extant papers on adaptive voter models \cite{Demirel2012,Ji2013} conduct analysis restricted to the case $u(t) = \frac{1}{2}$.
+		This restriction is usually justified by symmetry, and sometimes the observation that $U_t$, regarded as a stochastic process, is almost a martingale: the relationship $\E[U_{t+1}|U_t] = U_t$ holds for all $U_t \notin \{0,1\}$.
+		Thus, there is in expectation no net drift, so a system initialized with $u_0 = \frac{1}{2}$ will, in expectation, remain close to that state. 
 
-	We first begin by considering the expected change in the number of discordant edges in a single time-step. Conditioning on whether the event in that step is a mutation, a rewiring event, or a vote, we obtain the expression
-	\begin{align*}
-		\E[N_d(t+1) - N_d(t)] = \frac{2\lambda}{N}(M - 2N_d(t)) - \frac{(1-\lambda)\alpha}{2}(q_0 + q_1) + (1-\lambda)(1-\alpha)V\;,
-	\end{align*}
-	where 
-	\begin{align*}
-		q_0 = 
-		\begin{cases}
-			1-u &\quad \text{rewire to random} \\ 
-			1 &\quad \text{rewire to same}
-		\end{cases} 
-		\quad 
-		q_1 = 
-		\begin{cases}
-			u &\quad \text{rewire to random} \\ 
-			1 &\quad \text{rewire to same.}
-		\end{cases}
-	\end{align*}
-	The unknown term $V$ is the expected impact of a voting voting event on the discordant edge count, and may in general depend on any of the system parameters as well as $N_d(t)$ and $u$. Introducing the scaled variable $x$ and suppressing the argument $t$ yields the slightly more compact expression 
-	\begin{align}
-		f(x; a, u, c, q_0, q_1) \triangleq \lambda c(1-2x) - \frac{(1-\lambda)\alpha}{2} (q_0 + q_1) + (1-\lambda)V \label{eq:expected_change}
-	\end{align} 
-	for the expected change in discordant edges. 
+		However, expectation-based reasoning is not representative of long-run system behavior.
+		In the case $\lambda = 0$, $U_t$ is constant after finite time $t$ almost surely. 
+		The constant is bimodally distributed. 
+		The modes of that distribution depend on $\alpha$ in the rewire-to-random case, and are $\{0,1\}$ for all $\alpha$ in the rewire-to-same case \cite{Durrett2012}.
+		When $\lambda > 0$, on the other hand, $U_t$ does not converge to a constant, and is instead governed by a limiting distribution on $[0,1]$. 
+		This limiting distribution may be understood as an interpolation between two regimes. 
+		For $\lambda = 1$, only mutation events occur. 
+		In this case, the variance of $N_1$ is of order $O(N)$, and so the variance of $u$ is of order $O(N^{-1})$, implying that $u$ concentrates around its mean $\frac{1}{2}$ as $n$ grows large. 
+		\todo{check}
+		When $\lambda$ is allowed to grow small, however, $U_t$ approaches a uniform distribution on $[0,1]$. 
+		To see this, we note that $N_1(t)$ is a birth-death process on the states $[N]$, with transition probabilities
+		\begin{align}
+			b_n &\triangleq \prob(N_1(t+1) = n+1 | N_1(t) = n) = \lambda \frac{N - n}{N} + (1-\lambda)\frac{1}{2}\\ 
+			d_n &\triangleq \prob(N_1(t+1) = n-1 | N_1(t) = n) = \lambda \frac{n}{N} + (1-\lambda)\frac{1}{2}\;.
+		\end{align}
+		The equilibrium distribution $\pi$ of this chain satisfies 
+		\begin{align}
+			\pi_n &= \pi_0\prod_{i = 1}^n \frac{b_{i - 1}}{d_{i}}  \\ 
+				  &= \pi_0\prod_{i = 1}^n \frac{2\lambda (N-i+1) + N(1-\lambda)}{2\lambda i + N(1-\lambda)}\;. 
+		\end{align}
+		The product converges to $1$ as $\lambda \rightarrow 0$. 
+		This implies that $\pi_n \rightarrow \pi_0$ for all $n$; that is, $\pi$ converges to the uniform distribution on $[N]$. 
+		The proportion $U$ therefore converges to a discrete uniform random variable on $\left\{0,\frac{1}{N}, \ldots,\frac{N-1}{N}, 1\right\}$. 
+		Informally, for small $\lambda$, $U$ is nearly uniform on $[0,1]$. 
+		That is, while the AVM behavior is indeed symmetric about the point $u = \frac{1}{2}$, it will spend much of its time far away from this point unless $\lambda$ is large. 
 
-	Due to local correlations introduced by voting, there is no hope of calculating $V$ exactly in full generality. Instead, we approximate $V$ by considering a simplified scenario whose expectations can be computed analytically. The quality of the approximation depends on the extent to which this simplified scenario resembles the equilibrium behavior of the full system. 
+		These considerations suggest that analyses of adaptive voter models should either explicitly address the large $\lambda$ case or generalize to $u \neq \frac{1}{2}$. 
+		The former path is challenging, in that large mutation rates tend to destroy structure generated by the voting and rewiring processes. 
+		The latter case, however, poses its own problems. 
+		To our knowledge, only two approaches to this more general problem are extant, and both have limitations. 
+		Pair approximations (PAs) are easily computable, but provide poor quantitative estimates of system behaviors. 
+		Approximate Master Equations \cite{Durrett2012,Gleeson2013} require the numerical solution of a system of nonlinear equations that scales in $c^2$, rendering computations prohibitive when $c > 6$ or so. 
+		Furthermore, while AMEs provide relatively accurate approximations for small $\alpha$, their approximation error is largest precisely in the most interesting region of parameter space, in which $\alpha$ is large enough for meaningful competition to emerge between rewiring and voting dynamics. 
+		The analytical methods developed below address these limitations by explicitly addressing the case $u = 0$ in the phase transition regime. 
 
-	The scenario is as follows. We suppose that, at time $t$, node $v$ has just changed its opinion from $0$ to $1$ due to a voting step. We ``join the action'' at time $t+1$. At this time, node $v$ has a number $K_0$ of discordant edges and a number $J_0$ of concordant edges. We will track each of the discordant edges until each of them has been made concordant, logging any voting events along the way. The average impact of the voting events we observe on the total discordant edge count is our approximation for $V$. 
 
-	In order to make this program tractable, we impose the following assumptions: 
-	\begin{enumerate}
-		\item \textbf{Separation of Timescales}: We assume that the rest of the network is changing sufficiently slowly relative to the edges of $v$ that it may be modeled as fixed. This assumption is expected to be strongest when $x \approx 0$, and to become weaker as the number of discordant edges becomes nonnegligible. 
-		\item \textbf{Degree Distribution:} We assume that $G$ may be treated as a union of one or more Erd\"{o}s-Renyi components with mean degree $c$. This assumption appears to be nearly exact, as shown in \cite{Demirel2012}. Note that, since node $v$ was reached by following an edge, $v$ has in expectation $c+1$ edges, of which one is known to be concordant. 
-		\item \textbf{Mean Field Approximation:} We assume that nodes other than $v$ have in expectation $cx$ discordant and $c(1-x)$ concordant edges. 
-	\end{enumerate}
+
+	\subsection{Link Density Updates}
+
+		We define a random vector $\mathbf{X}(t) \in \mathcal{P}^4$ by $X_{ij}(t) = \frac{N_{ij}(t)}{2M}$. 
+		The proportion of discordant edges is $\rho = X_{01} + X_{10}$, and the proportion of concordant edges is $1 - \rho = X_{00} + X_{11}$. 
+		Let $\mathbf{x}(t) = \E[\mathbf{X}(t)]$. 
+		With this notation, the update in $\mathbf{x}$ under the dynamics may be written
+		\begin{align}
+			m(\mathbf{x}(t+1) - \mathbf{x}(t)) = \lambda w(\mathcal{G}(t)) + (1-\lambda)\alpha r(\mathcal{G}(t)) + (1-\lambda)(1-\alpha) v(\mathcal{G}(t))\;, \label{eq:dynamics}
+		\end{align}
+		where $w$, $r$, and $v$ are functions of the complete graph state $\mathcal{G}(t)$ giving the increments in $\mathbf{x}$ due to mutation, rewiring, and voting, respectively. 
+		In fact, $w$ and $r$ depend only on the zeroth and first moments of $\mathcal{G}(t)$. 
+		First, by simply tallying inflows and outflows, we can write
+		\begin{align}
+			w_{ij}(\mathcal{G}(t)) = w_{ij}(\mathbf{x}(t)) = 
+			\begin{cases}
+				c(x_{10}-x_{00}) & i = j = 0\\ 
+				c(x_{01}-x_{11}) & i = j = 1\\ 
+				c(x_{00} + x_{11} - x_{01} - x_{10}) & i \neq j\;.
+			\end{cases}
+		\end{align}
+		As might be expected, the mutation term depends only on $\mathbf{x}$, and is furthermore linear. 
+		The rewiring term is even simpler: we have  
+		\begin{align}
+			\mathbf{r}(\mathcal{G}(t)) = \mathbf{r}(u(t)) = 
+			\begin{cases}
+				\left(u_0(t), -\frac{1}{2}, -\frac{1}{2}, u_1(t)\right) & \text{rewire-to-random}\\
+				\left(1, -1, -1, 1\right) & \text{rewire-to-same}.
+			\end{cases}
+		\end{align}
+		The voting function $v$, however, cannot be parsed exactly in any fixed, finite set of system moments \cite{Demirel2012}. 
+		We therefore require an analytical framework for approximating this term. 
+		
+	\subsection{Approximating the Voter Term}
+
+		Our strategy is to consider a highly simplified scenario in which analytic calculations are possible, and then use these calculations as estimates of $v$. 
+		The quality of the approximation depends on the extent to which the assumptions enabling simplification hold. 
+
+		We fix a node $v$, and suppose that, at time $t$, $v$ changed its opinion from $0$ to $1$ due to either a mutation or a voting step. \todo{have already used $v$ for the voting term}
+		As a result of this event, $v$ now possesses $J_0$ concordant and $K_0$ discordant edges. 
+		We ``join the action'' at time $t+1$. 
+		Our approach is to track each of the $K_0$ discordant edges until each of them has been made concordant, logging any voting events along the way. 
+		The average change in $\mathbf{x}$ due to these voting events is our approximation for the term $v$ in \eqref{eq:dynamics}. 
+
+		Several assumptions are required in order to motivate and execute this program. 
+		\begin{enumerate}
+			\item \textbf{Timescale Separation:} We assume that the remainder of $\mathcal{G}$ is changing slowly relative to the ego network of node $v$. 
+			In particular, we suppose that all edge dynamics affecting the neighbors of $v$ occur on edges connected to $v$. 
+			This assumption will be strongest when $\rho \approx 0$ and $\lambda \ll 1$. 
+			\item \textbf{Large Network:} We assume that $N$ is sufficiently large that the probability of a rewiring event adding an edge to $v$ or a neighbor of $v$ is negligible. 
+			\item \textbf{Mean Field:} We assume that nodes other than $v$ have degree distributions governed by the global network average $\mathbf{x}$. \todo{should say something to justify why we aren't considering reactivated edges when $v$ votes.}
+		\end{enumerate}
+		To flesh out the mean-field assumption, it is useful to define the interopinion node degrees $c_{ij} \triangleq c\frac{x_{ij}}{u_i}$. 
+		Then, $c_{ij}$ is the expected number of opinion $j$ neighbors of an opinion $i$ node. 
+		The mean-field approximation implies that a chosen node other than $v$ with opinion $1$, say, has $c_{11}$ concordant edges and $c_{10}$ discordant ones. 
+
+
+
+
+
+
+
+
+
+		\tikzstyle{vertex}=[circle, fill=blue!30, minimum size=20pt, line width=0mm, inner sep=0pt]
+		\tikzstyle{selected vertex} = [vertex, fill=orange!50, line width=0mm]
+		\tikzstyle{discordant edge} = [draw,line width=1mm, -]
+		\tikzstyle{concordant edge} = [draw,line width=1mm, -,gray]
+		\tikzstyle{weight} = [font=\small]
+
+		\begin{figure}
+			\centering     
+				\begin{tikzpicture}[scale=1, auto,swap]
+				    
+				    \node[selected vertex] (v) at (0, 0) {$v$};
+				    \node[selected vertex] (v_0) at (0, -2) {$v_0$};
+				    \foreach \pos/\name in {{(-2,0)/v_1}, {(0,2)/v_2}, {(2,0)/v_3}}
+				        \node[vertex] (\name) at \pos {$\name$};
+				    % Connect vertices with edges and draw weights
+				    \foreach \target in {v_1, v_2, v_3}
+				    	\draw[discordant edge] (v) --  (\target);
+				    \draw[concordant edge] (v) -- (v_0);
+				\end{tikzpicture}
+			\caption{Initial state in our approximation scheme, with $J_0 = 1$ and $K_0 = 3$.}\label{fig:init_diagram}
+		\end{figure}
+
+
+
 
 \section{Analytic Calculations} \label{sec:analytic}
 	There are three classes of voting events that we need to track. 
@@ -417,10 +517,10 @@
 
 
 
-
+\printbibliography
 		
 
-\bibliography{/Users/phil/bibs/library.bib}{}
-\bibliographystyle{apalike}
+% \bibliography{/Users/phil/bibs/library.bib}{}
+% \bibliographystyle{apalike}
 
 \end{document}
