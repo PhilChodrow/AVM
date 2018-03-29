@@ -279,8 +279,6 @@ EV_m <- function(c, a, l, g, x, u, mode){
 	return(term)
 }
 
-
-
 # ------------------------------------------------------------------------------
 # ASSEMBLY
 # ------------------------------------------------------------------------------
@@ -290,16 +288,6 @@ dx_m <- function(c, a, l, g, P, u, x, mode){
 	mutation <- mutation_term(c, g, P, u, x) 
 	rewire <- rewire_term(u, mode)
 	vote <- EV_m(c, a, l, g, x, u, mode)
-	# print(c(mutation, rewire, vote))
-	# print(c(a, mutation[2], rewire[2], vote[2]))
+	
 	l*mutation + (1-l)*a*rewire + (1-l)*(1-a)*vote
 }
-
-# check: what should x sum to?
-
-
-
-
-# ------------------------------------------------------------------------------
-# ASSEMBLY
-# ------------------------------------------------------------------------------

@@ -77,12 +77,11 @@ test_3 <- EV_m(c, a, l, g, x, u, mode)
 c(test[2] + test[3], test_2, test_3[2] + test_3[3])
 
 
-arch <- function(u_1, a){
+arch <- function(u_1, a, mode = 'random'){
 	
 		lo  <- c(0, 0, 0, 0)
 		hi  <- c(1, 1, 1, 1)
 		u <- c(1-u_1, u_1)
-		
 		
 		f <- function(x_0){
 		
@@ -132,11 +131,11 @@ arch <- function(u_1, a){
 
 
 # do computations
-df <- expand.grid(u = seq(0.01, .99, .01),
-				  a_hat = c(4, 5,6, 7)) %>%
+df <- expand.grid(u = seq(0.05, .95, .05),
+				  a_hat = c(1, 2 ,3, 4, 5)) %>%
 	mutate(alpha = a_hat * .1) %>%
 	tbl_df() %>%
-	mutate(res = map2(u, alpha, arch)) %>% 
+	mutate(res = map2(u, alpha, arch, mode = 'same')) %>% 
 	unnest(res) %>% 
 	mutate(x1 = map_dbl(x_, ~.x[2] + .x[3]))
 
@@ -155,7 +154,7 @@ df %>%
 	aes(x = u) +
 	# geom_line(aes(group = alpha, y = observed)) +
 	geom_line(aes(y = observed, group = alpha, color = factor(alpha)), linetype = 'dashed', size = 1) +
-	geom_line(aes(y = x1, color = factor(alpha)), size = 1) +
+	geom_point(aes(y = x1, color = factor(alpha), alpha = -log(val)), size = 1) +
 	# geom_line(aes(y = PA), linetype = 'dashed') +
 	theme_bw() +
 	scale_x_continuous(limits = c(0,1), 
