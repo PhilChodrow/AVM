@@ -166,7 +166,7 @@ bool Dynamic_Voter::swap_delete(vector<Node>::iterator person_it, vector<vector<
 	return true;
 }
 
-double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, double max_steps, string process) {
+double Dynamic_Voter::simulate(int mode, float alpha, float lambda, float gamma, int dt, double max_steps, string process) {
 	long int e1,e0;
 	double step=0;
 	// int i,j,k;
@@ -174,11 +174,15 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 	vector<Edge>::iterator edge_it;
 	int action=-1; //0:adapt, 1:rewire
 	ofstream pFile_process;
+	double u=.5;
+	bool dir;
+	int old_state;
+	double t=0;
 
 	
 	if (!process.empty()) {
 		pFile_process.open(process.c_str());
-		pFile_process<<"step action alpha lambda N01_prev ";
+		pFile_process<<"step action alpha lambda gamma N01_prev ";
 		for (j=0; j< (int)sites.size(); j++)
 			pFile_process<<"N"<<j<<" ";
 		for (i=0;i<(int)sites.size();i++)
@@ -191,19 +195,45 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 		pFile_process<<endl;
         
         e0 = edge_boundary.size();
-		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<< " "<<e0<<" ";
+		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<< " "<<gamma<<" "<<e0<<" ";
 		print_statistics_triple(pFile_process);
     }
 
 	while (  (max_steps<0 || step<max_steps) ) {
 	    action=-1; // default is pass
 	    e0 = edge_boundary.size();
-        if (random_number.real()<lambda) {
-            //mutation model
-            e1 = random_number.integer(population.size());
-            action=2;
-            mutate_state(e1);
-        }
+
+	    // // TO CHANGE
+     //    if (random_number.real()<lambda) {
+     //        //mutation model
+     //        e1 = random_number.integer(population.size());
+     //        action=2;
+     //        mutate_state(e1);
+     //    }
+     //    // TO CHANGE
+
+        // DRAFT NEW
+        if (random_number.real()<lambda){
+        	action = 2;
+        	u = (double)sites[1].size() / (double)population.size();
+        	t = ((1-gamma)*u) / ((gamma)*(1.0-u)+(1-gamma)*u);
+        	if(random_number.real() >= t){
+        		dir = 0;
+        	}else{
+        		dir = 1;
+        	}
+        	old_state = -1;
+        	while(old_state != dir){
+        			e1 = random_number.integer(population.size());
+					old_state = population[e1].myself->state;
+				}
+        	mutate_state(e1);
+        	}
+
+        // DRAFT NEW
+
+
+
         else { //evolving voter model
         	if (edge_boundary.size() > 0){
 	    		e1 = random_number.integer(edge_boundary.size());
@@ -226,7 +256,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 		step++;
         if ((long int)step%dt==0) {
             if (pFile_process.is_open()) {
-                pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<e0<<" ";
+                pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<gamma<<" "<<e0<<" ";
                 print_statistics_triple(pFile_process);
             }
         }
@@ -234,7 +264,7 @@ double Dynamic_Voter::simulate(int mode, float alpha, float lambda, int dt, doub
 
     if ((long int)step%dt!=0) {
         if (pFile_process.is_open()) {
-    		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<e0<<" ";
+    		pFile_process<<step<<" "<<action<<" "<<alpha<<" "<<lambda<<" "<<gamma<<" "<<e0<<" ";
     		print_statistics_triple(pFile_process);
     		pFile_process.close();
         }

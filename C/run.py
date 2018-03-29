@@ -12,6 +12,8 @@ alph = np.linspace(1.0, 0.0, 101) # rewiring probability
 lam = 2.0**(-np.array([2.0, 4.0, 6.0, 8.0, 10.0]))
 l_01 = np.arange(0, 1, 11)
 g=2; # number of opinions
+
+gam = np.linspace(0.1, .9, 9)
 max_steps = 10**6
 realizations = np.arange(0,10)
 
@@ -22,13 +24,13 @@ U0=1.0/g*np.ones(g,); # list of initial densities
 U0[-1]=1-sum(U0[:-1]);
 mode = [0, 1]
 
-pars = product(realizations, lam, c, mode, alph, U_naught)
-for realization, lamb, cee, mode, alpha, U0 in pars:
+pars = product(realizations, lam, gam, c, mode, alph, U_naught)
+for realization, lamb, gamma, cee, mode, alpha, U0 in pars:
 
     outfile = 'data/C/mode_' + str(mode) + '_run_' + str(count)
     edge = node*cee/2.0
 
-    cmd='C/bin/DynamicVoter -n {} -m {} -a {} -l {} -t {} -M {} -T {} -o {} -u {}  '.format(node, edge, alpha, lamb, dt, mode, max_steps, outfile, U0);
+    cmd='C/bin/DynamicVoter -n {} -m {} -a {} -l {} -g {} -t {} -M {} -T {} -o {} -u {}  '.format(node, edge, alpha, lamb, gamma, dt, mode, max_steps, outfile, U0);
 #    for i in xrange(g):
 #        cmd=cmd
     print cmd

@@ -19,3 +19,6 @@ data
 fig
 .Rproj.user
 AV.Rproj
+*.bib
+*.bcf
+*.xml
