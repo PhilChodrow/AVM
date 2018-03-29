@@ -32,6 +32,7 @@ sigma_coef <- function(a, u, mode = 'random'){
     }else{
         0 %>% rep(length(u))
     }
+
 }
 
 coefs <- function(a, u, mode = 'random'){
@@ -45,6 +46,7 @@ coefs <- function(a, u, mode = 'random'){
 
 # Expected impact of a voter term 
 EV <- function(a, u, c, x, mode){
+
     k_0 <- c*(1-x)
     j_0 <- 1
     
@@ -60,8 +62,9 @@ EV <- function(a, u, c, x, mode){
         # conditional expectations, conditioned on K >= 1
         EK_ <- k_0/(1-b^k_0) - b/(1-b)
         EJ_ <- e*(k_0 - EK_) + j_0
+
         n_V <- ER + ES + (1-b^k_0)
-        
+
         # print(c(EK, EJ, ER, ES, EK_, EJ_, n_V, w))
         # print(c((ER + ES)*w, (1-b**k_0)*(EJ_ - EK_), n_V))
         1/n_V * ((ER + ES)*w + (1-b**k_0)*(EJ_ - EK_))
@@ -75,10 +78,12 @@ mean_EV <- function(a, u, c, x, mode, k_max = 100){
 }
 
 dx <- function(l, u, c, mode, a){
-    rewire_term <- ifelse(mode == 'random', -1/2, -1)
-    voter_term <- .5*(EV(a, u, c, 0, mode) + EV(a, 1-u, c, 0, mode))
-    # print(c(c, rewire_term, voter_term))
-    l*c + (1-l)*a*rewire_term + (1-l)*(1-a)*voter_term
+
+	rewire_term <- ifelse(mode == 'random', -1/2, -1)
+	voter_term <- .5*(EV(a, u, c, 0, mode) + EV(a, 1-u, c, 0, mode))
+	# print(c(c, rewire_term, voter_term))
+	l*c + (1-l)*a*rewire_term + (1-l)*(1-a)*voter_term
+
 }
 
 transition <- function(l, u, c, mode){
@@ -148,7 +153,7 @@ linearized_approx <- function(l, u, c, mode){
 
 # binary only
 mutation_term <- function(c, g, P, u, x){
-    
+
     # vector of mean degrees 
     U <- rep(u, each = 2)
     C <- c*x/U
@@ -178,6 +183,7 @@ rewire_term <- function(u, mode){
     }else{
         return(c(1 , -1, -1, 1))
     }
+
 }
 
 # ------------------------------------------------------------------
@@ -191,6 +197,7 @@ rewire_term <- function(u, mode){
 EV_multi <- function(a, mode, i, k_0, j_0, u, x, c){
     
     with(coefs(a, u, mode),{
+
         
         # computation of initial pars
         EK  <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
@@ -259,6 +266,7 @@ EV_m <- function(c, a, l, g, x, u, mode){
 # ------------------------------------------------------------------------------
 
 dx_m <- function(c, a, l, g, P, u, x, mode){
+
     
     mutation <- mutation_term(c, g, P, u, x) 
     rewire <- rewire_term(u, mode)
@@ -266,13 +274,5 @@ dx_m <- function(c, a, l, g, P, u, x, mode){
     # print(c(mutation, rewire, vote))
     # print(c(a, mutation[2], rewire[2], vote[2]))
     l*mutation + (1-l)*a*rewire + (1-l)*(1-a)*vote
+
 }
-
-# check: what should x sum to?
-
-
-
-
-# ------------------------------------------------------------------------------
-# ASSEMBLY
-# ------------------------------------------------------------------------------
