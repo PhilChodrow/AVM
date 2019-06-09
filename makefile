@@ -6,7 +6,7 @@ CFlags = -O3 -Wall -o
 voter_files = C/main.cpp C/Dynamic_Voter.cpp C/Node.cpp C/Edge.cpp C/Random1.cpp 
 py_files    = py/avm/avm.py py/run.py
 model_peds  = throughput/model_preds.csv
-approx_files = py/approximations.py py/compute_approx.py
+approx_files = r/models.R r/compute_arch.R
 
 
 # directories and file paths
@@ -39,7 +39,7 @@ py_data: $(py_files)
 	python py/run.py
 
 approx: $(approx_files)
-    python py/compute_approx.py
+    Rscript r/compute_arch.r
 
 
 # all: $(bin_loc) c_data py_data

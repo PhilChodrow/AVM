@@ -1,3 +1,6 @@
+# This is a utility script designed only to read the output of compute_arch.R into 
+# an R session and add a few important columns. 
+
 library(tidyverse)
 library(data.table)
 

@@ -1,15 +1,34 @@
+#' Functions for computing the approximations described in 
+#' "Local Symmetry and Global Structure in Adaptive Voter Models" 
+#' https://arxiv.org/abs/1812.05464
+
 library(tidyverse)
 library(assertthat)
 library(alabama)
 
+# tech function: normalize to a valid probability distribution
+normalize <- function(v) v / sum(v)
 
-# Compute rate constants associated with different voting events 
+
+#' Compute rate constants associated with voting events.  
+#' @param a Numeric between zero and one. The rewiring rate. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param c Nonnegative numeric. The mean degree of a node. 
+#' @param x Nonnegative 4-vector. The entries must sum to unity. 
+#' Structure is c(x_00, x_01, x_10, x_11), where x_ij is the density of links 
+#' between nodes of opinion i and nodes of opinion j
+#' @param mode String, either "random" or "same"
+#' @return A named list of four coefficients. 
+#' "b" corresponds $\beta_i$ in the paper. 
+#' "e" corresponds to $\eta_i$ in the paper. 
+#' "r" corresponds to $\rho_i$ in the paper
+#' "s" corresponds to $\sigma_i$ in the paper. 
 coefficients <- function(a, u, c, x = 0, mode = 'random'){
     assert_that(mode %in% c('random', 'same'))
-    D <- 0
+    
     if(mode == 'random'){
-        b <- (1.0+a*u+(1-a)*D)/(2.0-a*(1.0-u)+(1-a)*D)
-        e <- (a*u + (1-a)*(D+1))/(a*u + (1-a)*D + 1)
+        b <- (1.0+a*u)/(2.0-a*(1.0-u))
+        e <- (a*u + (1-a))/(a*u + 1)
         r <- (1.0-a)/(1-a*(1-u))
         s <- u*(2.0*(1-a)/(2.0-a))
     }else{
@@ -21,12 +40,14 @@ coefficients <- function(a, u, c, x = 0, mode = 'random'){
     return(list(b = b, e = e, r = r, s = s))
 }
 
-# tech function: normalize to a valid probability distribution
-normalize <- function(v) v / sum(v)
 
 # --------------------
 # --------------------
 # --------------------
+
+#' Compute the expected change in the edge population vector by entry due to a rewiring step. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param mode String, either "random" or "same"
 
 rewire_term <- function(u, mode){
     if(mode == 'random'){
@@ -36,8 +57,19 @@ rewire_term <- function(u, mode){
     }
 }
 
-# compute the expected change in the edge density vector due to voting events. 
-EV_m <- function(a, u, c, x, mode, by_type = F, use_mean = T, scale = T){
+#' compute the expected change in the edge population vector due to a voting step.  
+#' @param a Numeric between zero and one. The rewiring rate. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param c Nonnegative numeric. The mean degree of a node. 
+#' @param x Nonnegative 4-vector. The entries must sum to unity. 
+#' Structure is c(x_00, x_01, x_10, x_11), where x_ij is the density of links 
+#' between nodes of opinion i and nodes of opinion j
+#' @param scale Should the result incorporate linear scaling in order to 
+#' approximate supercritical equilibria? 
+#' @param mode String, either "random" or "same"
+#' @return A 4-vector giving the expected change. 
+
+EV_m <- function(a, u, c, x, mode, scale = T){
     
 
     C   <- c*(x / rep(u, c(2, 2))) # number of neighbors of each kind per node
@@ -93,18 +125,21 @@ EV_m <- function(a, u, c, x, mode, by_type = F, use_mean = T, scale = T){
         V_10 <-  V_01
         A <- matrix(c(V_00, V_01, V_10, V_11), nrow = 4, byrow = T)
         
-        if(by_type){
-            return(A)    
-        }else{
-            return(rowMeans(A))
-        }
+        return(rowMeans(A))
     })
 }
 
-
-# ------------------------------------------------------------------------------
-# ASSEMBLY
-# ------------------------------------------------------------------------------
+#' compute the expected change in the edge population vector due to voting and rewiring steps. 
+#' @param a Numeric between zero and one. The rewiring rate. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param c Nonnegative numeric. The mean degree of a node. 
+#' @param x Nonnegative 4-vector. The entries must sum to unity. 
+#' Structure is c(x_00, x_01, x_10, x_11), where x_ij is the density of links 
+#' between nodes of opinion i and nodes of opinion j
+#' @param scale Should the result incorporate linear scaling in order to 
+#' approximate supercritical equilibria? 
+#' @param mode String, either "random" or "same"
+#' @return A 4-vector giving the expected change. 
 
 dx_m <- function(a, u, c, x, mode, scale){
     
@@ -113,10 +148,24 @@ dx_m <- function(a, u, c, x, mode, scale){
     return(a*rewire + (1-a)*vote)
 }
 
+# tech function: compute the squared 2-norm of a vector. 
 sq_norm <- function(x) sum(x*x)
 
+
+#' compute the equilibrium value of $x$ under the paper's approximation
+#' @param a Numeric between zero and one. The rewiring rate. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param c Nonnegative numeric. The mean degree of a node. 
+#' Structure is c(x_00, x_01, x_10, x_11), where x_ij is the density of links 
+#' between nodes of opinion i and nodes of opinion j
+#' @param mode String, either "random" or "same"
+#' @param scale Should the result incorporate linear scaling in order to 
+#' approximate supercritical equilibria? 
+#' @param print_pars logical, should the main parameters be printed before 
+#' beginning computation? Useful for tracking progress in bulk computations 
+#' @return A data frame containing the solution, its value, and the parameters. 
+
 arch <- function(a, u, c, mode = 'random', scale = T, print_pars = F){
-    # ask if the initial node state should depend on u....?
     
     if(print_pars){
         print(paste(a, u, c, mode, sep = ' : '))
@@ -161,6 +210,16 @@ arch <- function(a, u, c, mode = 'random', scale = T, print_pars = F){
 
 
 # Phase Transition -----------------------------------
+
+
+#' Compute the phase transition in $\alpha$ according to the paper's model. 
+#' @param u Numeric between zero and one. The density of opinion-1 nodes. 
+#' @param c Nonnegative numeric. The mean degree of a node. 
+#' Structure is c(x_00, x_01, x_10, x_11), where x_ij is the density of links 
+#' between nodes of opinion i and nodes of opinion j
+#' @param mode String, either "random" or "same"
+#' @param print_pars logical, should the main parameters be printed before 
+#' beginning computation? Useful for tracking progress in bulk computations 
 
 transition <- function(u, c, mode = 'random'){
     if(length(u) == 1){

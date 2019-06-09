@@ -1,6 +1,11 @@
 library(tidyverse)
 source('r/models.R')
 
+if(!dir.exists('throughput')){
+    dir.create('throughput')
+}
+
+# Construct the base df of parameters on which we will compute. 
 arch_df <- expand.grid(
                        u = seq(0.01, .99, .01),
                        alpha = seq(.01, .99, .01),
@@ -8,15 +13,13 @@ arch_df <- expand.grid(
                        mode = c('random', 'same'),
                        scale = T,
                        stringsAsFactors = F) %>%
-    tbl_df() %>%
-    mutate(opt = pmap(.l = list(alpha, u, c, mode, scale), 
+    tbl_df() %>% 
+    # main computation is here: 
+    mutate(opt = pmap(.l = list(alpha, u, c, mode, scale),  
                       .f =  safely(arch),
                       print_pars = T)) 
 
-arch_df %>% saveRDS('throughput/model_arch.rds')
-
-arch_df <- readRDS('throughput/model_arch.rds')
-
+# Clean the result
 arch_df <- arch_df %>%
     mutate(res = map(opt, 'result'),
            valid = map_lgl(res, ~!is.null(.x))) %>% 
@@ -33,7 +36,7 @@ arch_df <- arch_df %>%
            val = map_dbl(res, 'val')) %>% 
     select(-x_, -opt, -valid, -res)
 
-
+# write the result, appending to an existing set of results if it exists. 
 write.table(arch_df, "throughput/model_arch.csv", sep = ",", 
             col.names = !file.exists("throughput/model_arch.csv"), 
             append = T, 
