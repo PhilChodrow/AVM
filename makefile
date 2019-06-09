@@ -5,6 +5,9 @@ CFlags = -O3 -Wall -o
 # needed for ims
 voter_files = C/main.cpp C/Dynamic_Voter.cpp C/Node.cpp C/Edge.cpp C/Random1.cpp 
 py_files    = py/avm/avm.py py/run.py
+model_peds  = throughput/model_preds.csv
+approx_files = py/approximations.py py/compute_approx.py
+
 
 # directories and file paths
 C_DATA_DIR = data/C
@@ -35,12 +38,14 @@ py_data: $(py_files)
 	fi
 	python py/run.py
 
+approx: $(approx_files)
+    python py/compute_approx.py
 
 
-
-
-all: $(bin_loc) c_data py_data
+# all: $(bin_loc) c_data py_data
+all: $(bin_loc) c_data approx
 
 clean: 
-	rm -rf bin
+	rm -rf C/bin
 	rm -rf data
+	rm -rf fig

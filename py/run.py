@@ -4,13 +4,15 @@ import pandas as pd
 import os
 from itertools import product
 
+
+count = len(os.listdir('data'));
 # set params
 N = 1000
 N_iters = 10
 pars = {
 	'alpha' : np.linspace(0, 1, 21),
 	'beta'  : 2.0**(-np.array([2.0, 4.0, 6.0, 8.0, 10.0])),
-	'c'     : np.array([4, 6, 8, 20]),
+	'c'     : np.array([4, 6, 8]),
 	'gamma' : np.linspace(.1, .9, 9)
 }
 
@@ -24,7 +26,7 @@ if __name__ == '__main__':
     
 	for j in range(N_iters):
 	# read data
-		data_file = data_dir + '/' + str(j) + '.csv'
+		data_file = data_dir + '/' + str(count) + '.csv'
 
 		if os.path.isfile(data_file):
 			df = pd.read_csv(data_file)
@@ -41,3 +43,5 @@ if __name__ == '__main__':
 			if i % interval == 0:
 				# print 'printing output ' + str(i) + ' of ' + str(len(pars) * N_iters) 
 				df.to_csv(data_file, index = False)
+		
+		count += 1

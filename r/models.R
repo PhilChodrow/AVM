@@ -1,278 +1,176 @@
 library(tidyverse)
+library(assertthat)
+library(alabama)
 
-# coefficients ------------------------------------------------------------
-# test modification.
-beta_coef <- function(a, u, mode = 'random'){
+
+# Compute rate constants associated with different voting events 
+coefficients <- function(a, u, c, x = 0, mode = 'random'){
+    assert_that(mode %in% c('random', 'same'))
+    D <- 0
     if(mode == 'random'){
-        (1.0+a*u)/(2.0-a*(1.0-u))
+        b <- (1.0+a*u+(1-a)*D)/(2.0-a*(1.0-u)+(1-a)*D)
+        e <- (a*u + (1-a)*(D+1))/(a*u + (1-a)*D + 1)
+        r <- (1.0-a)/(1-a*(1-u))
+        s <- u*(2.0*(1-a)/(2.0-a))
     }else{
-        (1.0+a)/2.0 %>% rep(length(u))
+        b <- (1.0+a)/2.0 %>% rep(length(u))
+        e <- (1.0)/(1.0+a) %>% rep(length(u))
+        r <- (1.0-a) %>% rep(length(u))
+        s <- 0 %>% rep(length(u))
     }
+    return(list(b = b, e = e, r = r, s = s))
 }
 
-eta_coef <- function(a, u, mode = 'random'){
-    if(mode == 'random'){
-        (1.0-a*(1.0-u))/(1.0+a*u)
-    }else{
-        (1.0)/(1.0+a) %>% rep(length(u))
-    }
-}
+# tech function: normalize to a valid probability distribution
+normalize <- function(v) v / sum(v)
 
-rho_coef <- function(a, u, mode = 'random'){
-    if(mode == 'random'){
-        (1.0-a)/(1-a*(1-u))
-    }else{
-        (1.0-a) %>% rep(length(u))
-    }
-}
-
-sigma_coef <- function(a, u, mode = 'random'){
-    if(mode == 'random'){
-        u*(2.0*(1-a)/(2.0-a))
-    }else{
-        0 %>% rep(length(u))
-    }
-
-}
-
-coefs <- function(a, u, mode = 'random'){
-    coef_list <- list(beta_coef, eta_coef, rho_coef, sigma_coef) %>% 
-        map(~.(a, u, mode))
-    names(coef_list) <- c('b', 'e', 'r', 's')
-    return(coef_list)
-}
-
-# expectation -------------------------------------------------------------
-
-# Expected impact of a voter term 
-EV <- function(a, u, c, x, mode){
-
-    k_0 <- c*(1-x)
-    j_0 <- 1
-    
-    w <- ifelse(mode == 'random', c*(1-2*x)-1, c-1)
-    
-    with(coefs(a, u, mode),{
-        # unconditional expectations
-        EK  <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
-        EJ  <- e*(k_0 - EK) + j_0
-        ER  <- r*(EJ - j_0)
-        ES  <- s*(k_0 - EK - EJ + j_0)
-        
-        # conditional expectations, conditioned on K >= 1
-        EK_ <- k_0/(1-b^k_0) - b/(1-b)
-        EJ_ <- e*(k_0 - EK_) + j_0
-
-        n_V <- ER + ES + (1-b^k_0)
-
-        # print(c(EK, EJ, ER, ES, EK_, EJ_, n_V, w))
-        # print(c((ER + ES)*w, (1-b**k_0)*(EJ_ - EK_), n_V))
-        1/n_V * ((ER + ES)*w + (1-b**k_0)*(EJ_ - EK_))
-    }) 
-}
-
-mean_EV <- function(a, u, c, x, mode, k_max = 100){
-    k <- 0:k_max
-    p <- dpois(k, c)
-    (EV(a, u, k, 1, x, mode) * p) %>% sum(na.rm = T)
-}
-
-dx <- function(l, u, c, mode, a){
-
-	rewire_term <- ifelse(mode == 'random', -1/2, -1)
-	voter_term <- .5*(EV(a, u, c, 0, mode) + EV(a, 1-u, c, 0, mode))
-	# print(c(c, rewire_term, voter_term))
-	l*c + (1-l)*a*rewire_term + (1-l)*(1-a)*voter_term
-
-}
-
-transition <- function(l, u, c, mode){
-    tryCatch({
-        uniroot(function(a) dx(l, u, c, mode, a), c(0,1-10^(-5)))$root
-    }, error = function(e) NA)
-}
-
-
-linearized_voter <- function(l, u, c, mode){
-    
-    # values at alpha = 0
-    r <- c+1
-    q <- (r - sqrt(r^2 - 4*(1-l)^2*(r-1)))/(2*(1-l)*(r-1)) # Allen + Nowak
-    x0 <- 1 - (q + (1-q)/2)
-    V0 <- -r*(l/(1-l))*(1-2*x0)
-    
-    # values at phase transition
-    a_ <- transition(l, u, c, mode)
-    rewire_term <- ifelse(mode == 'random', 1/2, 1)
-    # rewire_term <- 1
-    x_ <- 0
-    V_ <- (-l*c + (1-l)*a_*rewire_term)/((1-l)*(1-a_))
-    
-    f <- function(x){
-        ((x - x0)/(x_ - x0))*V_ + (x/x0)*V0
-    }
-    return(f)
-}
-
-linearized_approx <- function(l, u, c, mode){
-    
-    # values at $\alpha = 0$
-    r <- c+1 # degree correction?
-    # x0 <- 0.5*(1 - (r+4*l-((r+l)^2-4*(r-1))^0.5)/(2*(r-1))) # Granovsky + Madras
-    
-    # Allen + Nowak
-    q <- (r - sqrt(r^2 - 4*(1-l)^2*(r-1)))/(2*(1-l)*(r-1))
-    x0 <- 1 - (q + (1-q)/2)
-    
-    V0 <- -r*(l/(1-l))*(1-2*x0)
-    
-    # values at phase transition
-    a_ <- transition(l, u, c, mode) 
-    rewire_term <- ifelse(mode == 'random', 1/2, 1)
-    x_ <- 0
-    V_ <- (-l*c + (1-l)*a_*rewire_term)/((1-l)*(1-a_))
-    
-    # construct a function of alpha:
-    
-    f <- function(a){
-        # numerator   <- x0*(V_*(1-a)*(1-l) - rewire_term*a*(1-l) + l*c)
-        # denominator <- (V_*(1-a)*(1-l) - V0*(1-a)*(1-l)+2*x0*l*c)
-        numerator <- x0*((V_*x0)*(1-a)*(1-l) + (x0 - x_)*(rewire_term*(-1+l)*a + c*l))
-        denominator <- -V0*(x0 - x_)*(1-a)*(1-l) + x0*(V_*(1-a)*(1-l) + 2*c*(x0 - x_)*l)
-        pmax(numerator/denominator, 0)
-    }
-    return(f)
-}
-
-# ------------------------------------------------------------------------------
-# BINARY DYNAMICS WITH FULL EDGE TRACKING
-# ------------------------------------------------------------------------------
-
-#' P the mutation kernel
-#' g the sampling weight
-
-# binary only
-mutation_term <- function(c, g, P, u, x){
-
-    # vector of mean degrees 
-    U <- rep(u, each = 2)
-    C <- c*x/U
-    
-    # construct transformation matrix
-    q <- (g*u)
-    q <- q / sum(q)
-    
-    m_01 <- q[1] * P[1,2]
-    m_10 <- q[2] * P[2,1]
-    
-    M <- matrix(c(-2*m_01,      0, 2*m_10,       0,
-                  m_01,  -m_01,  -m_10,    m_10,
-                  m_01,  -m_01,  -m_10,    m_10,
-                  0, 2*m_01,      0, -2*m_10),
-                nrow = 4, 
-                ncol = 4, 
-                byrow = T)
-    
-    # compute vector of edge densities
-    c(M%*%C)
-}
+# --------------------
+# --------------------
+# --------------------
 
 rewire_term <- function(u, mode){
     if(mode == 'random'){
         return(c(u[1], -1/2, -1/2, u[2]))
-    }else{
+    }else if(mode == 'same'){
         return(c(1 , -1, -1, 1))
     }
-
 }
 
-# ------------------------------------------------------------------
-# VOTER TERM
-# ------------------------------------------------------------------
-
-# note: probably easiest to implement a single, vector version and then take an expectation across that. 
-
-
-#' parameters, local initial conditions, global conditions
-EV_multi <- function(a, mode, i, k_0, j_0, u, x, c){
+# compute the expected change in the edge density vector due to voting events. 
+EV_m <- function(a, u, c, x, mode, by_type = F, use_mean = T, scale = T){
     
-    with(coefs(a, u, mode),{
 
+    C   <- c*(x / rep(u, c(2, 2))) # number of neighbors of each kind per node
+    k_0 <-     c(C[4], C[1])       # initial discordant edge density 
+    j_0 <- 1 + c(C[2], C[3])       # initial concordant edge density
+    
+    with(coefficients(a, u, c, x, mode),{
+        
+        # probability that node V votes
+        EV_ <- 1-b^k_0
         
         # computation of initial pars
-        EK  <- k_0 - (b/(1.0-b))*(1.0-b^k_0)
+        EK  <- k_0 - b/(1.0-b)*EV_
         EJ  <- e*(k_0 - EK) + j_0
         ER <- r*(EJ - j_0)
         ES <- s*(k_0 - EK - EJ + j_0)
         
-        # conditional expectations, conditioned on K >= 1
-        EK_ <- k_0/(1-b^k_0) - b/(1-b)
+        # Expectations conditioned on V voting. 
+        EK_ <- k_0/EV_ - b/(1-b)
         EJ_ <- e*(k_0 - EK_) + j_0
         
-        EV_ <- (1-b^k_0)
+        # impact factors: expected change in the density vector per voting event of various types
         
-        # construct term
-        n_V <- ER[i+1] + ES[i+1] + EV_[i+1]
+        ## Neighbor votes
+        n_00 <-    c( 1 +   C[3]        ,   -   C[1]        )
+        n_11 <-    c(   -   C[4]        , 1 +   C[2]        )
         
-        # mean-field degrees
-        C <- c*(x / rep(u, c(2,2)))
-        # C <- c*(x / u)
+        ## "Wild" votes (unconnected to V)
+        w_00 <- .5*c( 1 +   C[3] - C[1] , 1 +   C[3] - C[1] )
+        w_11 <- .5*c( 1 +   C[2] - C[4] , 1 +   C[2] - C[4] )
         
-        # check these
-        if(i == 0){
-            
-            n_00 <-  1 + C[3]
-            n_11 <- -C[4]
-            w_00 <-  (1 + C[3] - C[1])/2
-            w_11 <-  (1 + C[2] - C[4])/2
-            s_00 <- -EV_[i+1]*EJ_[i+1]
-            s_11 <-  EV_[i+1]*EK_[i+1]
-            
-        }else if(i == 1){
-            
-            n_00 <- -C[1]
-            n_11 <-  1 + C[2]
-            w_00 <-  (1 + C[3] - C[1])/2
-            w_11 <-  (1 + C[2] - C[4])/2
-            s_00 <-  EV_[i+1]*EK_[i+1]
-            s_11 <- -EV_[i+1]*EJ_[i+1]
+        ## Backward votes (V votes)
+        s_00 <-    c(   - EV_[1]*EJ_[1] ,     EV_[2]*EK_[2] )
+        s_11 <-    c(     EV_[1]*EK_[1] ,   - EV_[2]*EJ_[2] )
+        
+        # backward vote decay
+        if(scale){
+            x_ <- (c-1)/(2*c) # estimate for top of the arch
+            xx <- 4*u[1]*u[2]*x_
+            scaling_factor <- ((xx - (x[2] + x[3]) )/ xx)    
+        }
+        else{
+            scaling_factor <- 1
         }
         
-        V_00 <-  2/n_V*(ER[i+1]*n_00 + ES[i+1]*w_00 + s_00)
-        V_11 <-  2/n_V*(ER[i+1]*n_11 + ES[i+1]*w_11 + s_11)
+        # expected total number of votes 
+        n_V <- ER + ES + EV_
+        
+        # aggregate impacts on the edge density vector
+        V_00 <-  2/n_V*(ER*n_00 + ES*w_00 + s_00*scaling_factor)
+        V_11 <-  2/n_V*(ER*n_11 + ES*w_11 + s_11*scaling_factor)
         V_01 <- -(V_00 + V_11)/2
         V_10 <-  V_01
+        A <- matrix(c(V_00, V_01, V_10, V_11), nrow = 4, byrow = T)
         
-        c(V_00, V_01, V_10, V_11) 
+        if(by_type){
+            return(A)    
+        }else{
+            return(rowMeans(A))
+        }
     })
 }
-
-
-# voting only at this stage
-EV_m <- function(c, a, l, g, x, u, mode){
-    
-    C <- c*(c(x[1],x[4]) / u)
-    term <- .5 * (EV_multi(a, mode, 1, C[1], 1, u, x, c) + EV_multi(a, mode, 0, C[2], 1, u, x, c))
-    return(term)
-}
-
-
-
-
 
 
 # ------------------------------------------------------------------------------
 # ASSEMBLY
 # ------------------------------------------------------------------------------
 
-dx_m <- function(c, a, l, g, P, u, x, mode){
-
+dx_m <- function(a, u, c, x, mode, scale){
     
-    mutation <- mutation_term(c, g, P, u, x) 
     rewire <- rewire_term(u, mode)
-    vote <- EV_m(c, a, l, g, x, u, mode)
-    # print(c(mutation, rewire, vote))
-    # print(c(a, mutation[2], rewire[2], vote[2]))
-    l*mutation + (1-l)*a*rewire + (1-l)*(1-a)*vote
-
+    vote <- EV_m(a, u, c, x, mode, scale = scale, by_type = F)
+    return(a*rewire + (1-a)*vote)
 }
+
+sq_norm <- function(x) sum(x*x)
+
+arch <- function(a, u, c, mode = 'random', scale = T, print_pars = F){
+    # ask if the initial node state should depend on u....?
+    
+    if(print_pars){
+        print(paste(a, u, c, mode, sep = ' : '))
+    }
+    
+    
+    lo  <- c(0, 0, 0, 0)
+    hi  <- c(1, 1, 1, 1)
+    u <- c(1-u, u)
+    
+    f <- function(x_0){
+        
+        h <- function(x){ 
+            y <- c(x[1], x[2], x[2], 1 - x[1] - 2*x[2])
+            dx_m(a, u, c, y, mode = mode, scale = scale) %>% sq_norm()
+        }
+        
+        hin <- function(x){
+            c(x[1], x[2], 1 - x[1], 1 - x[2], 1 - x[1] - 2*x[2])
+        }
+        
+        res <- auglag(par = x_0,
+                      fn = h,
+                      hin = hin,
+                      control.outer = list(trace = F))
+        
+        return(res)
+    }
+    
+    x_df <- expand.grid(w = seq(0.1, .5, .2),
+                        x = seq(0.1, .5, .2)) %>%
+        tbl_df() %>%
+        mutate(x_0 = map2(w, x, .f = ~c(.x, .y)),
+               res = map(x_0, f))
+    
+    test_df <- x_df %>%
+        mutate(x_ = map(res, 'par'),
+               val = map_dbl(res, 'value'),
+               x_ = map(x_, ~c(.x[1], .x[2], .x[2], 1 - .x[1] - 2*.x[2])))
+    return(test_df[test_df$val == min(test_df$val),][1,])
+}
+
+
+# Phase Transition -----------------------------------
+
+transition <- function(u, c, mode = 'random'){
+    if(length(u) == 1){
+        u <- c(u, 1 - u)
+    }
+    tryCatch({
+        uniroot(function(a) dx_m(a, u, c, c(.5, 0, 0, .5), mode, scale = T)[2], 
+                c(0,1-10^(-5)))$root
+    }, error = function(e) NA)
+}
+
+
+

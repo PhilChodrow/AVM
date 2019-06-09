@@ -88,10 +88,11 @@ class coev:
 		'''
 			gamma governs symmetry of mutations
 		'''
+		
 		try: 
 			if np.random.rand() < beta:
 				u = self.mean_v()
-				direction = round(1.0*(np.random.rand() >= (gamma*u)/((1-gamma)*(1-u)+gamma*u)))
+				direction = round(1.0*(np.random.rand() < (gamma*u)/((1-gamma)*(1-u)+gamma*u)))
 				
 				# pick nodes until opinion matches direction 
 				old_opinion = "none yet"
@@ -235,7 +236,7 @@ def order_edge(e):
 def run_dynamics(N, c, k, beta, alpha, normalize_k, rand_opinions,  **kwargs):
 	coev = er_coev(N, c, k, normalize_k, rand_opinions)
 	df = coev.dynamics(alpha = alpha, 
-	                   beta = beta, 
+					   beta = beta, 
 					   **kwargs)
 	if df is not None:
 		param_cols = {'c' : c, 'k' : k, 'N' : N, 'alpha' : alpha}

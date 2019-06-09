@@ -1,0 +1,348 @@
+---
+title: "Figures for Local Symmetry and Global Structure in Adaptive Voter Models"
+author: "phil"
+date: "6/4/2019"
+output: html_document
+---
+
+```{r setup}
+
+# core libraries, read in simulation and approximation data
+
+library(tidyverse)
+library(data.table)
+library(ggjoy)
+library(RColorBrewer)
+
+source('r/read_data.R')
+source('r/models.R')
+
+fig_dir <- 'fig'
+if(!dir.exists(fig_dir)){
+    dir.create(fig_dir)
+}
+
+# simulation
+full_df <- read_data()
+
+df <- full_df %>% 
+    filter(step > 2000000)
+
+# approximation
+model_df <- read_csv('throughput/model_arch.csv')
+```
+
+# Illustration of the rewire-to-random arch
+
+```{r}
+
+sub_df <- full_df %>% 
+    filter(lambda == min(lambda), 
+           c == 4, 
+           alpha %in% c(.2, 0.4, .6,  0.8),
+           mode == 'random'
+           )
+
+sub_df <- sub_df %>% 
+    group_by(mode) %>% 
+    mutate(run = cumsum(lead(step) < step)) %>% 
+    filter(run < 20)
+
+sub_df %>% 
+    ggplot() + 
+    aes(x = u, y = x, color = factor(alpha)) + 
+    geom_point(alpha = .3) + 
+    theme_bw() + 
+    scale_color_brewer(palette = 'Dark2') +
+    # facet_wrap(~mode) + 
+    guides(color = guide_legend(title = expression(alpha),
+                                override.aes = list(alpha=1))) +
+    xlab(expression(q[1])) + 
+    ylab(expression(rho)) +
+    theme(legend.position = 'bottom')
+
+# ggsave('fig/arch_illustration.pdf', width = 6, height = 3)
+ggsave('fig/arch_illustration_random.pdf', width = 4, height = 3)
+```
+
+```{r PA_funs}
+
+PA <- function(l, a, c){
+    phi <- (1-a)*(1-l)
+    x <- (a*(1-l) + 2*(phi *c - 1) + sqrt(16*phi*l*c + (a*(1-l)+2*(phi*c-1))^2))/(8*phi*c)
+    return(x)
+    }
+
+PA_transition <- function(c, u = 1/2, mode = 'random'){
+    if(mode == 'random'){
+        return((c - 1)/(c - 1 + u^2 + (1-u)^2))
+    }else{
+        return((c-1)/c) 
+    }
+}
+
+PA_arch <- function(a, c, u){
+    u*(1-u)*((c - 1) - (u^2 + (1-u)^2) *a/(1-a))
+}
+
+```
+
+
+# Phase Transition
+
+## Various Approximations for the Phase Transition
+
+```{r}
+
+other_approx <-   data_frame(c = 4,    # AME
+                             alpha = 0.76, 
+                             mode = 'random',
+                             model = 'AME: Durrett et al., 2012') %>% 
+    rbind(
+        expand.grid( # Also: Toruniewska 2018
+            c = c(4, 6, 8, 20),
+            mode = 'same',
+            model = 'Vazquez et al., 2008',
+            stringsAsFactors = F
+        ) %>%
+            tbl_df() %>% 
+            mutate(alpha = (c-2)/(c-1))
+    ) %>% 
+    rbind( # Demirel et al.
+        data_frame(c = 4,
+                   alpha = 0.46,
+                   mode = "same",
+                   model = "Demirel et al., 2014")
+    ) %>%
+# rbind( # Demirel et al.
+#         data_frame(c = 4, 
+#                    alpha = 0.59,
+#                    mode = "same",
+#                    model = "Active-Neighborhood")
+#     ) %>% 
+rbind( # Silk et al.
+        data_frame(c = 4, 
+                   alpha = 0.59,
+                   mode = "same",
+                   model = "Silk et al., 2014")
+    ) %>% 
+rbind(# Bohme and Gross
+    data_frame(c = c(4, 6, 8),
+               alpha = c(0.455, 0.623, 0.708),
+               mode = "same",
+               model = "Böhme and Gross, 2011")
+    ) %>% 
+rbind(
+    expand.grid(c = c(4, 6, 8, 20),
+                mode = c("same", "random"),
+                model = "PA: Durrett et al., 2012",
+                stringsAsFactors = F) %>% 
+        tbl_df() %>% 
+        mutate(alpha = map2_dbl(c, mode, ~PA_transition(.x, 1/2, .y)))
+) %>% 
+    mutate(mode = recode(mode, 
+                         random = 'Rewire-to-Random', 
+                         same = 'Rewire-to-Same')) 
+
+
+levels = c(
+    'Vazquez et al., 2008',
+    "Böhme and Gross, 2011",
+    "PA: Durrett et al., 2012",
+    'AME: Durrett et al., 2012',
+    "Silk et al., 2014",
+    "Demirel et al., 2014"
+    )
+
+other_approx <- other_approx %>% 
+    mutate(model = factor(model, levels = levels))
+
+```
+
+
+
+```{r}
+
+transition_df <- expand.grid(c = 1:30, 
+                             mode = c('random', 'same'), 
+                             u = 0.5,
+                             stringsAsFactors = F) %>% 
+    as_data_frame() %>% 
+    mutate(alpha = pmap_dbl(.l = list(u, c, mode), .f = transition),
+           alpha = ifelse(is.na(alpha), 0, alpha),
+           mode = recode(mode, random = 'Rewire-to-Random', same = 'Rewire-to-Same'))
+    
+plot_df <- df %>% 
+    mutate(u = round(u/5, 2)*5) %>% 
+    filter(lambda == min(lambda)) %>% 
+    group_by(alpha, u, lambda, c, mode) %>% 
+    summarise(x = mean(x),
+              n = n()) %>% 
+    ungroup() %>% 
+    mutate(log_lambda = round(log2(lambda))) %>% 
+    mutate(mode = recode(mode, random = 'Rewire-to-Random', same = 'Rewire-to-Same')) 
+
+p <- plot_df %>% 
+    ungroup() %>% 
+    filter(abs(u - .5) < .001) %>%  
+    # filter(mode == 'random') %>% 
+    ggplot() + 
+    aes(x = alpha, y = c) + 
+    geom_joy(aes(height = x, group = c), stat = 'identity', size = 0.2) + 
+    facet_wrap(~mode) + 
+    geom_line(aes(x = alpha), 
+                  data = transition_df, 
+                  size = .5) + 
+    theme_bw() + 
+    scale_y_continuous(breaks = c(4, 6, 8, 20), limits = c(1, 30), labels = c('c = 4', 'c = 6', 'c = 8', 'c = 20'), position = 'right') + 
+    xlab(expression(alpha)) + 
+    ylab(expression("")) + 
+    scale_color_brewer(palette = 'Dark2') + 
+    guides(color = guide_legend(title = 'Model')) + 
+    # theme(legend.position="bottom") + 
+    scale_x_continuous(limits = c(0,1)) + 
+    geom_point(aes(shape = model), size = 2, data = other_approx)
+
+p
+ggsave('fig/transition_joy.pdf', p, width = 8, height = 4)
+```
+
+# Arches and Approximations
+
+```{r}
+
+alphas <- c(.3, .5, .7, .9)
+
+levels <- paste0("c = ", c(4, 6, 8, 20))
+
+# Mode = 'random'
+
+sub_df <- df %>% 
+    filter(lambda == min(lambda), 
+           round(100*alpha) %in% round(100*alphas),
+           round(100*u) %% 5 == 0 ) %>% 
+    mutate(c_string = paste0('c = ', c),
+           c_string = factor(c_string, levels),
+           u = round(u, 2)) %>% 
+    group_by(alpha, lambda, u, c_string, mode) %>% 
+    summarise(rho = mean(x)) %>% 
+    mutate(mode = recode(mode, same = 'Rewire-to-Same', random = 'Rewire-to-Random'))
+
+arch_df <- model_df %>%
+    mutate(c_string = paste0('c = ', `c`)) %>%
+    filter(alpha %in% alphas,
+           c_string %in% levels) %>%
+    mutate(c_string = factor(c_string, levels)) %>% 
+    mutate(x_01 = ifelse(val > 0.005, 0, x_01)) %>%
+    mutate(mode = recode(mode, same = 'Rewire-to-Same', random = 'Rewire-to-Random'))
+
+p <- sub_df %>% 
+    ggplot() + 
+    aes(x = u, y = rho, group = alpha) + 
+    geom_point(aes(color = factor(alpha), shape = factor(alpha)),  alpha = 1) + 
+    scale_fill_brewer(palette = 'Dark2') +
+    scale_color_brewer(palette = 'Dark2') +
+    facet_grid(mode~c_string) + 
+    theme_bw() + 
+    xlab(expression(italic(q[1]))) +
+    ylab(expression(rho)) + 
+    guides(color = guide_legend(title = expression(alpha),
+                                override.aes = list(size = 3)),
+           shape = guide_legend(title = expression(alpha))) + 
+    # theme(legend.position = 'bottom') +
+    geom_line(aes(x = u,
+                  y = x_01,
+                  color = factor(alpha),
+                  group = factor(alpha)),
+              data = arch_df,
+              show.legend = F) + 
+    theme(axis.text.x = element_text(size = 7))
+
+ggsave('fig/arch_approx.pdf', width = 8, height = 3.5)
+
+
+
+```
+
+# Arch Top Approximations
+
+```{r}
+
+plot_df <- df %>% 
+    filter(abs(u - 0.5) < 0.005,
+           lambda == min(lambda),
+           abs((alpha*100) %% 5) < 0.01) %>% 
+    group_by(alpha, c, mode) %>% 
+    summarise(x = mean(x)) %>% 
+    mutate(mode = recode(mode, same = 'Rewire-to-Same', random = 'Rewire-to-Random'))
+
+lines_df <- model_df %>% 
+    filter(abs(u - 0.5) < 0.01) %>% 
+    mutate(x_01 = ifelse(val > 0.0005, 0, x_01)) %>% 
+    mutate(mode = recode(mode, same = 'Rewire-to-Same', random = 'Rewire-to-Random'))
+
+p <- plot_df %>% 
+    ggplot() + 
+    aes(x = alpha, y = x) + 
+    geom_point(aes(shape = factor(c), color = factor(c))) + 
+    facet_wrap(~mode) +
+    theme_bw() + 
+    scale_fill_brewer(palette = 'Dark2') + 
+    scale_color_brewer(palette = 'Dark2') + 
+    geom_line(aes(x = alpha, y = x_01, color = factor(c)),  data = lines_df, show.legend = F) + 
+    xlab(expression(alpha)) + 
+    ylab(expression(rho)) + 
+    guides(color = guide_legend(title = expression(italic(c))),
+           shape = guide_legend(title = expression(italic(c))))
+    
+
+ggsave('fig/arch_tops.pdf', p, width = 7, height = 3)
+
+```
+
+
+
+## Symmetry-breaking of voting behavior
+
+```{r}
+
+C <- 8
+
+hist_df <- df %>% 
+    mutate(x = round(x, 1)) %>% 
+    filter(c == C,
+           lambda == max(lambda),
+           # abs(alpha - .8) < .1,
+           abs(u - .5) < .05,
+           action == 0,
+           mode == 'random',
+           x %in% c(0, .2, .4)) %>%
+    group_by(x, mode, dN) %>% 
+    summarise(n = n()) %>%
+    mutate(p = n/sum(n),
+           m = sum(p*dN))
+
+hist_df %>% 
+    ungroup() %>% 
+    mutate(x_lab = paste0('paste(rho,', '"=",' , x, ')')) %>% 
+    ggplot() + 
+    aes(x = dN, y = p) + 
+    geom_bar(stat = 'identity') + 
+    # facet_grid(mode~x_lab, labeller = label_parsed) + 
+    facet_wrap(~x_lab, labeller = label_parsed) +
+    geom_vline(aes(xintercept = m), color = 'black') + 
+    geom_vline(aes(xintercept = C*(1-2*x)-1), color = 'firebrick') + 
+    theme_bw() +
+    scale_x_continuous(limits = c(-C*2, C*2)) + 
+    xlab(expression(paste(Delta, M[paste(0,1)]))) + 
+    ylab('Frequency')
+    
+# ggsave('fig/symmetry_breaking.pdf', width = 8, height = 4)
+ggsave('fig/symmetry_breaking_random.pdf', width = 3, height = 2)
+
+```
+
+
+
+
+
